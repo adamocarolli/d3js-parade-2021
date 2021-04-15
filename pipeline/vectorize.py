@@ -52,24 +52,21 @@ def vectorize(dataset: List) -> List:
                                  min_df=2, stop_words=stop_words,
                                  use_idf=True)
     X = vectorizer.fit_transform(dataset)
-    dense = X.toarray()
-
-    # stupid stupid python
-    result = list()
-    for entry in dense:
-        vector = list()
-        for value in entry:
-            vector.append(value)
-        result.append(vector)
-
-    return result
+    return X.toarray()
 
 
 def main() -> None:
     dataset = load_jsonl_file('../data/adam_d3js/d3js.json')
     result = vectorize(dataset)
-    with open('../data/adam_d3js_embeddings.json', 'w') as outfile:
-        json.dump(result, outfile)
+    print('writing...')
+    with open('../data/adam_d3js_embeddings.jsonl', 'a') as outfile:
+        for entry in result:
+            vector = dict()
+            indices = entry.nonzero()[0]
+            for i in indices:
+                vector[f'{i}'] = entry[i]
+            json.dump(vector, outfile)
+            outfile.write('\n')
     print('TADA!')
 
 
