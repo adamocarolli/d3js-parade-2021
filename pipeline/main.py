@@ -1,5 +1,6 @@
 import json
 import math
+from time import process_time
 from typing import Dict, List, Optional
 from sklearn.decomposition import TruncatedSVD
 from sklearn.datasets import fetch_20newsgroups
@@ -44,6 +45,25 @@ def load_jsonl_file(path: str) -> List:
         result.append(json_obj['tweet'])
 
     return result
+
+
+def cos_similarity(a, b):
+    dot_product = 0
+    m_a = 0
+    m_b = 0
+
+    for i in a.nonzero():
+        dot_product += a[i] * b[i]
+        m_a += a[i] * a[i]
+
+    for i in b.nonzero():
+        m_b += b[i] * b[i]
+
+    m_a = math.sqrt(m_a)
+    m_b = math.sqrt(m_b)
+
+    return dot_product / (m_a * m_b)
+
 
 
 def build_graph_edges(dataset: List) -> List:
@@ -168,17 +188,27 @@ def cluster_tweets(dataset: List, indices: Optional[List], true_k: int, max_dept
 
 
 def main() -> None:
-    dataset = load_jsonl_file('../data/adam_d3js/d3js.json')
-    # # print(result)
-    # clusters = cluster_tweets(datset, None, 4, 50, 50)
-    # with open('adam_d3js_clusters.json', 'w') as outfile:
-    #     json.dump(clusters, outfile)
+    # dataset = load_jsonl_file('../data/adam_d3js/d3js.json')
+    # # # print(result)
+    # # clusters = cluster_tweets(datset, None, 4, 50, 50)
+    # # with open('adam_d3js_clusters.json', 'w') as outfile:
+    # #     json.dump(clusters, outfile)
+    # # print('TADA!')
+    #
+    # result = build_graph_edges(dataset)
+    # with open('adam_d3js_edges.json', 'w') as outfile:
+    #     json.dump(result, outfile)
     # print('TADA!')
 
-    result = build_graph_edges(dataset)
-    with open('adam_d3js_edges.json', 'w') as outfile:
-        json.dump(result, outfile)
-    print('TADA!')
+    start = process_time()
+    np_arr = np.array([i for i in range(100000000)])
+    end = process_time()
+    print(f'INIT ARRAY TIME: {round(end - start, 5)}')
+
+    start = process_time()
+    np_arr += 2
+    end = process_time()
+    print(f'ADD SCALAR TIME: {round(end - start, 5)}')
 
 
 

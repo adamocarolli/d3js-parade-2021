@@ -46,27 +46,32 @@ def load_jsonl_file(path: str) -> List:
     return result
 
 
-def vectorize(dataset: List) -> List:
-    stop_words = text.ENGLISH_STOP_WORDS.union(["http", "https", "t.co", "amp"])
+def vectorize(dataset: List) -> any:
+    stop_words = text.ENGLISH_STOP_WORDS.union(["http", "https", "tco", "t", "co", "amp", "rt", "bitly", "bit", "ly"])
     vectorizer = TfidfVectorizer(max_df=1.0, max_features=None,
                                  min_df=2, stop_words=stop_words,
                                  use_idf=True)
-    X = vectorizer.fit_transform(dataset)
-    return X.toarray()
+    return vectorizer.fit_transform(dataset), vectorizer.get_feature_names()
 
 
 def main() -> None:
     dataset = load_jsonl_file('../data/adam_d3js/d3js.json')
-    result = vectorize(dataset)
+    vectors, terms = vectorize(dataset)
+    dense = vectors.toarray()
+
     print('writing...')
-    with open('../data/adam_d3js_embeddings.jsonl', 'a') as outfile:
-        for entry in result:
+    with open('../data/adam_d3js_embeddings.jsonl', 'w') as outfile:
+        for entry in dense:
             vector = dict()
             indices = entry.nonzero()[0]
             for i in indices:
                 vector[f'{i}'] = entry[i]
             json.dump(vector, outfile)
             outfile.write('\n')
+
+    with open('../data/adam_d3js_terms.json', 'w') as outfile:
+        json.dump(terms, outfile)
+
     print('TADA!')
 
 
