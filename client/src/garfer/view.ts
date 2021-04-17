@@ -1,5 +1,6 @@
 import {GraferController, GraferControllerData, UX} from '@uncharted.software/grafer';
 import {DataFile} from '@dekkai/data-source';
+import {EventEmitter} from '@dekkai/event-emitter';
 
 async function parseJSONL(input, cb): Promise<void> {
     const file = await DataFile.fromRemoteSource(input);
@@ -45,12 +46,13 @@ const kDataPackages = {
     }
 }
 
-export class GraferView {
+export class GraferView extends EventEmitter {
     private container: HTMLElement;
     private controller: GraferController;
     private nodes: Map<string, any>;
 
     constructor(container: HTMLElement) {
+        super();
         this.container = container;
         this.nodes = new Map();
     }
@@ -59,7 +61,7 @@ export class GraferView {
         const data = await this.loadData(kDataPackages[dataPack]);
         this.controller = new GraferController(this.container as HTMLCanvasElement, data);
         this.controller.on(UX.picking.PickingManager.events.click, (event, info) => {
-            console.log(this.nodes.get(info.id));
+            this.emit('node-clicked', this.nodes.get(info.id));
         });
     }
 

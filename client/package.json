@@ -49,6 +49,7 @@
     },
     "dependencies": {
         "@dekkai/data-source": "^0.2.1",
+        "@dekkai/event-emitter": "^1.1.0",
         "@uncharted.software/grafer": "^0.3.1",
         "tweakpane": "^2.4.0"
     }
