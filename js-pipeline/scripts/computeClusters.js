@@ -1,5 +1,6 @@
 import {makeJSONL, parseJSONL, loadFileJSON} from './JSONL.js'
 import {packEnclose} from 'https://cdn.skypack.dev/d3-hierarchy/src/pack/siblings.js';
+import {computeClusterLabel} from './computeClusterLabels.js';
 
 
 function easeOutCubic(x) {
@@ -11,7 +12,10 @@ function getTerms(terms, embedding) {
     const keys = Object.keys(embedding);
     const result = [];
     for (const key of keys) {
-        result.push(terms[parseInt(key, 10)]);
+        result.push({
+            score: embedding[key],
+            term: terms[parseInt(key, 10)],
+        });
     }
     return result;
 }
@@ -115,6 +119,22 @@ function addChildrenToOutput(cluster, points, nodes, clusters) {
                 id: `n-${node.id}`,
                 point: pointID,
                 label: node.name || ' ',
+                tweet: node.tweet,
+            });
+            node.ptr.pointID = pointID;
+        }
+    }
+}
+
+function addEdgesToOutput(nodes, edges, out) {
+    for (const edge of edges) {
+        const source = nodes.get(edge.source);
+        const target = nodes.get(edge.target);
+        if ('pointID' in source && 'pointID' in target) {
+            out.push({
+                id: out.length,
+                source: source.pointID,
+                target: target.pointID,
             });
         }
     }
@@ -129,7 +149,7 @@ function addChildren(parent, children) {
                 id: gID++,
                 x: 0,
                 y: 0,
-                name: `[${child.id}] Cluster ${child.score}`,
+                name: child.label,
                 children: [],
             }
             addChildren(node, child.children);
@@ -138,15 +158,17 @@ function addChildren(parent, children) {
                 id: gID++,
                 x: 0,
                 y: 0,
-                r: 1,
-                name: `[${child.id}] Node`,
+                r: 2,
+                name: `${child.tweetID}`,
+                tweet: child.tweet,
+                ptr: child,
             }
         }
         parent.children.push(node);
     }
 }
 
-function buildHierarchy(nodes, clusters, embeddings, terms) {
+function buildHierarchy(nodes, edges, clusters) {
     const root = {
         id: 'c-root',
         children: [],
@@ -163,7 +185,7 @@ function buildHierarchy(nodes, clusters, embeddings, terms) {
     }
 
     // find all nodes without a parent
-    // for (const node of nodes) {
+    // for (const node of nodes.values()) {
     //     if (node.parent === null) {
     //         rootChildren.push(node);
     //     }
@@ -185,13 +207,16 @@ function buildHierarchy(nodes, clusters, embeddings, terms) {
     const outPoints = [];
     const outNodes = [];
     const outClusters = [];
+    const outEdges = [];
 
     addChildrenToOutput(root, outPoints, outNodes, outClusters);
+    addEdgesToOutput(nodes, edges, outEdges);
 
     return {
         outPoints,
         outNodes,
         outClusters,
+        outEdges,
     }
 }
 
@@ -214,7 +239,7 @@ async function main(inputFile, outputPath) {
     console.log('Loading tweets...');
     const tweets = [];
     await parseJSONL('../data/adam_d3js/d3js.json', json => {
-        tweets.push(json.tweet);
+        tweets.push(json);
     });
 
     console.log('Loading edges...');
@@ -234,7 +259,9 @@ async function main(inputFile, outputPath) {
         if (!nodes.has(json.source)) {
             nodes.set(json.source, {
                 id: json.source,
-                tweet: tweets[json.source],
+                tweetID: tweets[json.source].id,
+                tweet: tweets[json.source].tweet,
+                terms: getTerms(terms, embeddings[json.source]),
                 parent: null,
             });
         }
@@ -242,7 +269,9 @@ async function main(inputFile, outputPath) {
         if (!nodes.has(json.target)) {
             nodes.set(json.target, {
                 id: json.target,
-                tweet: tweets[json.target],
+                tweetID: tweets[json.target].id,
+                tweet: tweets[json.target].tweet,
+                terms: getTerms(terms, embeddings[json.target]),
                 parent: null,
             });
         }
@@ -257,6 +286,7 @@ async function main(inputFile, outputPath) {
 
     console.log('Generating clusters...');
     const clusters = [];
+    const validEdges = [];
     for (let i = 1.0; i >= 0.24; i -= 0.05) {
         const key = i.toFixed(2);
         const scoreEdges = scores.get(key);
@@ -271,10 +301,12 @@ async function main(inputFile, outputPath) {
 
             if (!aCluster && !bCluster) {
                 clusters.push(makeCluster(clusters.length, key, a, b));
+                validEdges.push(edge);
             } else if (aCluster && !bCluster) {
                 if (aCluster.score === key) {
                     aCluster.children.push(b);
                     b.parent = aCluster;
+                    validEdges.push(edge);
                 } else {
                     // clusters.push(makeCluster(clusters.length, key, b));
                     interEdges.push(edge)
@@ -283,6 +315,7 @@ async function main(inputFile, outputPath) {
                 if (bCluster.score === key) {
                     bCluster.children.push(a);
                     a.parent = bCluster;
+                    validEdges.push(edge);
                 } else {
                     // clusters.push(makeCluster(clusters.length, key, a));
                     interEdges.push(edge);
@@ -290,6 +323,7 @@ async function main(inputFile, outputPath) {
             } else {
                 if (aCluster.score === key && bCluster.score === key) {
                     joinCluster(aCluster, bCluster, clusters);
+                    validEdges.push(edge);
                 } else {
                     interEdges.push(edge);
                 }
@@ -319,16 +353,25 @@ async function main(inputFile, outputPath) {
         }
     }
 
+    for (const cluster of clusters) {
+        if (cluster) {
+            cluster.label = computeClusterLabel(cluster);
+        }
+    }
+
     // console.log(clusters);
 
     console.log('Building hierarchy...');
-    const { outPoints, outNodes, outClusters } = buildHierarchy(nodes, clusters, embeddings, terms);
+    const { outPoints, outNodes, outClusters, outEdges } = buildHierarchy(nodes, validEdges, clusters);
 
     console.log('Writing points JSONL file...');
     await Deno.writeTextFile(`${outputPath}/points.jsonl`, makeJSONL(outPoints));
 
     console.log('Writing nodes JSONL file...');
     await Deno.writeTextFile(`${outputPath}/nodes.jsonl`, makeJSONL(outNodes));
+
+    console.log('Writing edges JSONL file...');
+    await Deno.writeTextFile(`${outputPath}/edges.jsonl`, makeJSONL(outEdges));
 
     console.log('Writing clusters JSONL file...');
     await Deno.writeTextFile(`${outputPath}/clusters.jsonl`, makeJSONL(outClusters));
