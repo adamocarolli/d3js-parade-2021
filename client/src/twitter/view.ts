@@ -2,17 +2,21 @@
 export class TwitterView {
     private element: HTMLElement;
     private container: HTMLElement;
+    private header: HTMLElement;
+    private list: HTMLElement;
     private tweets: Map<string, HTMLElement>;
     private twttr: any;
 
     constructor(container:HTMLElement) {
         this.element = container;
-        this.container = document.createElement('div');
         this.tweets = new Map();
         this.twttr = (window as any).twttr;
+        this.container = this.makeContainer();
+        this.header = this.makeHeader();
+        this.list = this.makeList();
 
-        this.container.className = 'twitter-panel';
-
+        this.container.appendChild(this.header);
+        this.container.appendChild(this.list);
         this.element.appendChild(this.container);
     }
 
@@ -22,7 +26,7 @@ export class TwitterView {
         } else {
             const tweetContainer = document.createElement('div');
             tweetContainer.className = 'tweet-container';
-            this.container.insertBefore(tweetContainer, this.container.firstChild);
+            this.list.insertBefore(tweetContainer, this.list.firstChild);
 
             const buttons = this.makeTweetButtons(node);
             tweetContainer.appendChild(buttons);
@@ -56,6 +60,47 @@ export class TwitterView {
             tweet.parentElement.removeChild(tweet);
             this.tweets.delete(id);
         }
+    }
+
+    private clearTweets() {
+        for (const tweet of this.tweets.values()) {
+            tweet.parentElement.removeChild(tweet);
+        }
+        this.tweets.clear();
+    }
+
+    private makeEmptyElement(className: string): HTMLElement {
+        const element = document.createElement('div');
+        element.className = className;
+        return element;
+    }
+
+    private makeContainer(): HTMLElement {
+        return this.makeEmptyElement('twitter-panel');
+    }
+
+    private makeHeader(): HTMLElement {
+        const header = this.makeEmptyElement('twitter-header');
+
+        const title = this.makeEmptyElement('twitter-header-title');
+        title.innerText = 'D3 Tweets!';
+        header.appendChild(title);
+
+        const menu = this.makeEmptyElement('twitter-header-menu');
+        const clear = document.createElement('span');
+        clear.innerText = 'clear';
+        menu.appendChild(clear);
+        header.appendChild(menu);
+
+        clear.addEventListener('click', () => {
+            this.clearTweets();
+        });
+
+        return header;
+    }
+
+    private makeList(): HTMLElement {
+        return this.makeEmptyElement('twitter-list');
     }
 
     private makeTweetButtons(tweet: any): HTMLElement {

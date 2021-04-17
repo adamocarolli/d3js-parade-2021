@@ -81,6 +81,43 @@ a {
 
     display: flex;
     flex-direction: column;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.twitter-header {
+    width: 100%;
+    height: 60px;
+    min-height: 60px;
+    background-color: var(--nord1);
+}
+
+.twitter-header-title {
+    color: var(--nord4);
+    font-size: 24px;
+    font-weight: 700;
+    padding: 6px 6px 2px;
+    text-align: center;
+}
+
+.twitter-header-menu {
+    color: var(--nord9);
+    padding: 0 32px;
+    text-align: right;
+}
+
+.twitter-header-menu span {
+    user-select: none;
+    cursor: pointer;
+}
+
+.twitter-header-menu span:hover {
+    color: var(--nord10);
+}
+
+.twitter-list {
+    width: 100%;
+    flex-grow: 1;
     overflow-x: hidden;
     overflow-y: scroll;
 }
