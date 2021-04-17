@@ -257,7 +257,6 @@ async function main(inputFile, outputPath) {
 
     console.log('Generating clusters...');
     const clusters = [];
-    let oldKey = null;
     for (let i = 1.0; i >= 0.24; i -= 0.05) {
         const key = i.toFixed(2);
         const scoreEdges = scores.get(key);
@@ -307,18 +306,17 @@ async function main(inputFile, outputPath) {
                 const bCluster = getTopMostAncestor(b);
                 if (aCluster.score === key && bCluster.score === key) {
                     joinCluster(aCluster, bCluster, clusters);
-                } else if (aCluster.score === key && (!bCluster.score || bCluster.score === oldKey)) {
+                } else if (aCluster.score === key) {
                     aCluster.children.push(bCluster);
                     bCluster.parent = aCluster;
-                } else if (bCluster.score === key && (!aCluster.score || aCluster.score === oldKey)) {
+                } else if (bCluster.score === key) {
                     bCluster.children.push(aCluster);
                     aCluster.parent = bCluster;
-                } else if ((!bCluster.score || bCluster.score === oldKey) && (!aCluster.score || aCluster.score === oldKey)) {
+                } else {
                     clusters.push(makeCluster(clusters.length, key, aCluster, bCluster));
                 }
             }
         }
-        oldKey = key;
     }
 
     // console.log(clusters);
