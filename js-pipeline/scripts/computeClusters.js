@@ -257,20 +257,22 @@ async function main(inputFile, outputPath) {
         edges.push(json);
 
         if (!nodes.has(json.source)) {
+            const tweet = tweets[json.source];
             nodes.set(json.source, {
                 id: json.source,
-                tweetID: tweets[json.source].id,
-                tweet: tweets[json.source].tweet,
+                tweetID: `${tweet.link.split('/').pop()}`,
+                tweet: { author: tweet.name, user: tweet.username, text: tweet.tweet },
                 terms: getTerms(terms, embeddings[json.source]),
                 parent: null,
             });
         }
 
         if (!nodes.has(json.target)) {
+            const tweet = tweets[json.target];
             nodes.set(json.target, {
                 id: json.target,
-                tweetID: tweets[json.target].id,
-                tweet: tweets[json.target].tweet,
+                tweetID: `${tweet.link.split('/').pop()}`,
+                tweet: { author: tweet.name, user: tweet.username, text: tweet.tweet },
                 terms: getTerms(terms, embeddings[json.target]),
                 parent: null,
             });
