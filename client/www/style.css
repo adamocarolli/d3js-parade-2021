@@ -98,7 +98,7 @@ a {
     width: 100%;
     height: 60px;
     min-height: 60px;
-    background-color: #15181c;
+    background-color: #AAB8C2;
 }
 
 .twitter-header-title {
@@ -133,7 +133,7 @@ a {
 }
 
 .tweet-container {
-    background-color: #15181c;
+    background-color: #E1E8ED;
     border-radius: 10px;
     border: #1877b3 solid 3px;
     margin: 6px 0;
@@ -156,12 +156,12 @@ a {
     width: 100%;
     margin: 10px auto;
     max-width: 250px;
-    background-color: black;
+    background-color: white;
     /* color: white; */
     border-radius: 12px;
     padding: 16px;
     box-sizing: border-box;
-    color: rgb(217, 217, 217);
+    color: rgb(0, 0, 0);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     font-size: 14px;
 }

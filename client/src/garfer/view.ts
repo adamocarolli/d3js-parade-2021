@@ -72,7 +72,7 @@ export class GraferView extends EventEmitter {
         this.controller.on(UX.picking.PickingManager.events.click, (event, info) => {
             this.emit('node-clicked', this.nodes.get(info.id));
         });
-        vec4.set(this.controller.viewport.clearColor, 0, 0, 0, 1);
+        vec4.set(this.controller.viewport.clearColor, 255, 255, 255, 1); // background color: white
     }
 
     public getWorldPointPosition(id: string | number): vec3 {
@@ -130,7 +130,7 @@ export class GraferView extends EventEmitter {
                     visibilityThreshold: 160,
                     repeatLabel: -1,
                     repeatGap: 64,
-                    fade: 0.65,
+                    // fade: 0.65,
                     // desaturate: 1.0,
                 },
             },
@@ -203,7 +203,7 @@ export class GraferView extends EventEmitter {
         const colors = [
             '#1DA1F2',
             '#657786',
-            '#AAB8C2',
+            '#E1E8ED',
         ];
 
         return { points, colors, layers: [ nodeLayer, clusterLayer ] };

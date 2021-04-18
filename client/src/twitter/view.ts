@@ -59,7 +59,7 @@ export class TwitterView {
                 node.label,
                 tweetContainer,
                 {
-                    theme: 'dark',
+                    // theme: 'dark',
                     width: 250,
                     // cards: 'hidden',
                     conversation: 'none',
