@@ -44,7 +44,14 @@ const kDataPackages = {
         clusterEdges: null,
         nodes: 'layouts/adam_d3js/inferred/nodes.jsonl',
         nodeEdges: 'layouts/adam_d3js/inferred/edges.jsonl',
-    }
+    },
+    adam_inferred_flat: {
+        points: 'layouts/adam_d3js/inferred_flat/points.jsonl',
+        clusters: 'layouts/adam_d3js/inferred_flat/clusters.jsonl',
+        clusterEdges: null,
+        nodes: 'layouts/adam_d3js/inferred_flat/nodes.jsonl',
+        nodeEdges: 'layouts/adam_d3js/inferred_flat/edges.jsonl',
+    },
 }
 
 export class GraferView extends EventEmitter {
@@ -60,7 +67,7 @@ export class GraferView extends EventEmitter {
     }
 
     public async init(dataPack: keyof typeof kDataPackages) {
-        const data = await this.loadData(kDataPackages[dataPack]);
+        const data = await this.loadData(dataPack in kDataPackages ? kDataPackages[dataPack] : kDataPackages.adam_inferred);
         this.controller = new GraferController(this.container as HTMLCanvasElement, data);
         this.controller.on(UX.picking.PickingManager.events.click, (event, info) => {
             this.emit('node-clicked', this.nodes.get(info.id));
