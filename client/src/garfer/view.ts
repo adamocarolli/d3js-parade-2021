@@ -65,6 +65,7 @@ export class GraferView extends EventEmitter {
         this.controller.on(UX.picking.PickingManager.events.click, (event, info) => {
             this.emit('node-clicked', this.nodes.get(info.id));
         });
+        vec4.set(this.controller.viewport.clearColor, 0, 0, 0, 1);
     }
 
     public getWorldPointPosition(id: string | number): vec3 {
@@ -122,6 +123,8 @@ export class GraferView extends EventEmitter {
                     visibilityThreshold: 160,
                     repeatLabel: -1,
                     repeatGap: 64,
+                    fade: 0.65,
+                    // desaturate: 1.0,
                 },
             },
             edges: {
@@ -138,7 +141,7 @@ export class GraferView extends EventEmitter {
             const nodes = clusterLayer.labels;
             await parseJSONL(paths.clusters, json => {
                 nodes.data.push(Object.assign({}, json, {
-                    color: 3,
+                    color: 2,
                 }));
             });
         }
@@ -147,8 +150,8 @@ export class GraferView extends EventEmitter {
             const edges = clusterLayer.edges;
             await parseJSONL(paths.clusterEdges, json => {
                 edges.data.push(Object.assign({}, json, {
-                    sourceColor: 0,
-                    targetColor: 0,
+                    sourceColor: 1,
+                    targetColor: 1,
                 }));
             });
         }
@@ -162,7 +165,9 @@ export class GraferView extends EventEmitter {
             edges: {
                 data: [],
                 options: {
-                    alpha: 0.55,
+                    alpha: 0.20,
+                    // fade: 0.60,
+                    // desaturate: 0.5,
                     nearDepth: 0.9,
                 },
             },
@@ -173,7 +178,7 @@ export class GraferView extends EventEmitter {
             await parseJSONL(paths.nodes, json => {
                 this.nodes.set(json.id, json);
                 nodes.data.push(Object.assign({}, json, {
-                    color: 1,
+                    color: 0,
                 }));
             });
         }
@@ -182,17 +187,16 @@ export class GraferView extends EventEmitter {
             const edges = nodeLayer.edges;
             await parseJSONL(paths.nodeEdges, json => {
                 edges.data.push(Object.assign({}, json, {
-                    sourceColor: 2,
-                    targetColor: 2,
+                    sourceColor: 1,
+                    targetColor: 1,
                 }));
             });
         }
 
         const colors = [
-            '#5e81ac',
-            '#d08770',
-            '#ebcb8b',
-            '#81a1c1',
+            '#1DA1F2',
+            '#657786',
+            '#AAB8C2',
         ];
 
         return { points, colors, layers: [ nodeLayer, clusterLayer ] };

@@ -108,7 +108,7 @@ export class TwitterView {
     private updateLinksCanvas(): void {
         const size = this.grafer.controller.viewport.size;
         this.context.clearRect(0, 0, size[0], size[1]);
-        this.context.strokeStyle = '#b48ead';
+        this.context.strokeStyle = '#1877b3';
         this.context.lineWidth = 3;
         for (const tweet of this.tweets.values()) {
             const bb = tweet.element.getBoundingClientRect();
