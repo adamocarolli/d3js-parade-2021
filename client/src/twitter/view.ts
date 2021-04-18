@@ -38,7 +38,7 @@ export class TwitterView {
         this.initializeEvents();
     }
 
-    public async displayTweet(node: any) {
+    public async displayTweet(node: any): Promise<void> {
         if (this.tweets.has(node.label)) {
             this.removeTweet(node.label);
         } else {
@@ -75,7 +75,7 @@ export class TwitterView {
 
     private initializeEvents(): void {
         let animationFrame = null;
-        const animationCallback = () => {
+        const animationCallback = (): void => {
             this.updateLinksCanvas();
             animationFrame = null;
         };
@@ -97,12 +97,12 @@ export class TwitterView {
         // monkey patch grafer, ugh
         // at some point the ability to listen for render/update events needs to be added to grafer
         const old_render = (this.grafer.controller.viewport as any)._render.bind(this.grafer.controller.viewport);
-        (this.grafer.controller.viewport as any)._render = () => {
+        (this.grafer.controller.viewport as any)._render = (): void => {
             old_render();
             if (animationFrame === null) {
                 animationFrame = requestAnimationFrame(animationCallback);
             }
-        }
+        };
     }
 
     private updateLinksCanvas(): void {
@@ -121,7 +121,7 @@ export class TwitterView {
         }
     }
 
-    private removeTweet(id: string) {
+    private removeTweet(id: string): void {
         const tweet = this.tweets.get(id);
         if (tweet) {
             tweet.element.parentElement.removeChild(tweet.element);
@@ -129,7 +129,7 @@ export class TwitterView {
         }
     }
 
-    private clearTweets() {
+    private clearTweets(): void {
         for (const tweet of this.tweets.values()) {
             tweet.element.parentElement.removeChild(tweet.element);
         }

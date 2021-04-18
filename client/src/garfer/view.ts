@@ -52,7 +52,7 @@ const kDataPackages = {
         nodes: 'layouts/adam_d3js/inferred_flat/nodes.jsonl',
         nodeEdges: 'layouts/adam_d3js/inferred_flat/edges.jsonl',
     },
-}
+};
 
 export class GraferView extends EventEmitter {
     private container: HTMLElement;
@@ -66,7 +66,7 @@ export class GraferView extends EventEmitter {
         this.nodes = new Map();
     }
 
-    public async init(dataPack: keyof typeof kDataPackages) {
+    public async init(dataPack: keyof typeof kDataPackages): Promise<void> {
         const data = await this.loadData(dataPack in kDataPackages ? kDataPackages[dataPack] : kDataPackages.adam_inferred);
         this.controller = new GraferController(this.container as HTMLCanvasElement, data);
         this.controller.on(UX.picking.PickingManager.events.click, (event, info) => {
@@ -141,7 +141,7 @@ export class GraferView extends EventEmitter {
                     alpha: 0.04,
                     nearDepth: 0.9,
                 },
-            }
+            },
         };
 
         if (paths.clusters) {

@@ -1,7 +1,7 @@
 import {GraferView} from './garfer/view';
 import {TwitterView} from './twitter/view';
 
-async function main() {
+async function main(): Promise<void> {
     const pathName = window.location.pathname;
     const pathComponents = pathName.split('/').filter(v => Boolean(v));
     const dataPack = pathComponents.pop() || 'adam_inferred';
