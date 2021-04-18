@@ -53,14 +53,14 @@ async function main(options) {
         promises.push(esbuild.build(getDistBuild(options.watch)));
         await Promise.all(promises);
 
-        if (options.examples) {
-            copy('examples/static/**/*', 'build/examples/', function(err) {
-                if (err) {
-                    // sorry future Dario, this is going to be an issue one day, you should throw!
-                    console.error(err);
-                }
-            });
-        }
+
+        copy('www/**/*', 'build/', (err) => {
+            if (err) {
+                // sorry future Dario, this is going to be an issue one day, you should throw!
+                console.error(err);
+            }
+        });
+
 
         if (options['dev-server']) {
             const server = liveServer({
