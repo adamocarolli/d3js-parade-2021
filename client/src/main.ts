@@ -9,8 +9,8 @@ function createLoading(container): HTMLElement {
     spinner.className = 'lds-dual-ring';
 
     const label = document.createElement('div');
-    label.className = 'data-loading-label';
-    label.innerText = 'LOADING...';
+    label.className = 'data-loading data-loading-label';
+    label.innerText = 'LOADING';
 
     el.appendChild(spinner);
     el.appendChild(label);
