@@ -75,28 +75,31 @@ a {
     position: absolute;
     left: 50%;
     top: 50%;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, -70%);
 }
 
 .data-loading-label {
-    margin-top: 16px;
+    width: 100%;
+    /*margin: 16px 0;*/
     color: #657786;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     font-weight: 700;
-    font-size: 14px;
+    font-size: 10px;
     text-align: center;
 }
 
 .lds-dual-ring {
+    position: relative;
     display: inline-block;
-    width: 80px;
-    height: 80px;
+    width: 100px;
+    height: 100px;
 }
 .lds-dual-ring:after {
     content: " ";
     display: block;
-    width: 64px;
-    height: 64px;
+    box-sizing: border-box;
+    width: 84px;
+    height: 84px;
     margin: 8px;
     border-radius: 50%;
     border: 6px solid;
