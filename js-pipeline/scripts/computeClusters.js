@@ -289,10 +289,11 @@ async function main(inputFile, outputPath) {
     console.log('Generating clusters...');
     const clusters = [];
     const validEdges = [];
+    const interEdges = new Map();
     for (let i = 1.0; i >= 0.24; i -= 0.05) {
         const key = i.toFixed(2);
         const scoreEdges = scores.get(key);
-        const interEdges = [];
+        // const interEdges = [];
         for (const edgeID of scoreEdges) {
             const edge = edges[edgeID];
             const a = nodes.get(edge.source);
@@ -310,8 +311,10 @@ async function main(inputFile, outputPath) {
                     b.parent = aCluster;
                     validEdges.push(edge);
                 } else {
-                    // clusters.push(makeCluster(clusters.length, key, b));
-                    interEdges.push(edge)
+                    if (!interEdges.has(key)) {
+                        interEdges.set(key, []);
+                    }
+                    interEdges.get(key).push(edge)
                 }
             } else if (bCluster && !aCluster) {
                 if (bCluster.score === key) {
@@ -319,21 +322,28 @@ async function main(inputFile, outputPath) {
                     a.parent = bCluster;
                     validEdges.push(edge);
                 } else {
-                    // clusters.push(makeCluster(clusters.length, key, a));
-                    interEdges.push(edge);
+                    if (!interEdges.has(key)) {
+                        interEdges.set(key, []);
+                    }
+                    interEdges.get(key).push(edge)
                 }
             } else {
                 if (aCluster.score === key && bCluster.score === key) {
                     joinCluster(aCluster, bCluster, clusters);
                     validEdges.push(edge);
                 } else {
-                    interEdges.push(edge);
+                    if (!interEdges.has(key)) {
+                        interEdges.set(key, []);
+                    }
+                    interEdges.get(key).push(edge)
                 }
             }
         }
+    }
 
-        // solve inter edges
-        for (const edge of interEdges) {
+    // solve inter edges
+    for (const [key, edges] of interEdges) {
+        for (const edge of edges) {
             const a = nodes.get(edge.source);
             const b = nodes.get(edge.target);
 
@@ -341,7 +351,8 @@ async function main(inputFile, outputPath) {
                 const aCluster = getTopMostAncestor(a);
                 const bCluster = getTopMostAncestor(b);
                 if (aCluster.score === key && bCluster.score === key) {
-                    joinCluster(aCluster, bCluster, clusters);
+                    // skip for now
+                    // joinCluster(aCluster, bCluster, clusters);
                 } else if (aCluster.score === key) {
                     aCluster.children.push(bCluster);
                     bCluster.parent = aCluster;
