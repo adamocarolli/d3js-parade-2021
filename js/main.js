@@ -21351,6 +21351,7 @@ var TwitterView = class {
     };
   }
   updateLinksCanvas() {
+    const listBB = this.list.getBoundingClientRect();
     const size = this.grafer.controller.viewport.size;
     this.context.clearRect(0, 0, size[0], size[1]);
     this.context.strokeStyle = "#1877b3";
@@ -21358,9 +21359,15 @@ var TwitterView = class {
     for (const tweet of this.tweets.values()) {
       const bb = tweet.element.getBoundingClientRect();
       const point = this.grafer.worldToPixel(tweet.point);
+      let tweetY = bb.y + bb.height * 0.5;
+      if (tweetY < listBB.top) {
+        tweetY = listBB.top - (listBB.top - tweetY) * 0.025;
+      } else if (tweetY > listBB.bottom) {
+        tweetY = listBB.bottom + (tweetY - listBB.bottom) * 0.025;
+      }
       this.context.beginPath();
       this.context.moveTo(point[0], size[1] - point[1]);
-      this.context.lineTo(bb.x * window.devicePixelRatio, (bb.y + bb.height * 0.5) * window.devicePixelRatio);
+      this.context.lineTo(bb.x * window.devicePixelRatio, tweetY * window.devicePixelRatio);
       this.context.stroke();
     }
   }
