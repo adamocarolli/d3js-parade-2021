@@ -5,10 +5,9 @@ async function main() {
     const grafer = new GraferView(document.body);
     await grafer.init('adam_inferred');
 
-    const twitter = new TwitterView(document.body);
+    const twitter = new TwitterView(document.body, grafer);
 
     grafer.on('node-clicked', (type: string, node: any) => {
-        console.log(node);
         twitter.displayTweet(node);
     });
 }

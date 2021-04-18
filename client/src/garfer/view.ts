@@ -1,6 +1,7 @@
 import {GraferController, GraferControllerData, UX} from '@uncharted.software/grafer';
 import {DataFile} from '@dekkai/data-source';
 import {EventEmitter} from '@dekkai/event-emitter';
+import {mat4, vec2, vec3, vec4} from 'gl-matrix';
 
 async function parseJSONL(input, cb): Promise<void> {
     const file = await DataFile.fromRemoteSource(input);
@@ -48,8 +49,9 @@ const kDataPackages = {
 
 export class GraferView extends EventEmitter {
     private container: HTMLElement;
-    private controller: GraferController;
     private nodes: Map<string, any>;
+
+    public controller: GraferController;
 
     constructor(container: HTMLElement) {
         super();
@@ -63,6 +65,36 @@ export class GraferView extends EventEmitter {
         this.controller.on(UX.picking.PickingManager.events.click, (event, info) => {
             this.emit('node-clicked', this.nodes.get(info.id));
         });
+    }
+
+    public getWorldPointPosition(id: string | number): vec3 {
+        const point = this.controller.viewport.graph.getPointIndex(id);
+        const result = vec3.create();
+        if (point !== null) {
+            const view = this.controller.viewport.graph.dataView;
+            const index = point * 4 * 4; // bleh
+            vec3.set(result,
+                view.getFloat32(index, true),
+                view.getFloat32(index + 4, true),
+                view.getFloat32(index + 8, true)
+            );
+        }
+        return result;
+    }
+
+    public worldToPixel(position: vec3): vec2 {
+        const camera = this.controller.viewport.camera;
+        const renderMatrix = mat4.mul(mat4.create(), camera.projectionMatrix, camera.viewMatrix);
+        mat4.mul(renderMatrix, renderMatrix, this.controller.viewport.graph.matrix);
+
+        const projected = vec4.set(vec4.create(), position[0], position[1], position[2], 1);
+        vec4.transformMat4(projected, projected, renderMatrix);
+
+        const size = this.controller.viewport.size;
+        const x = (projected[0] / projected[3]) * size[0] * 0.5 + size[0] * 0.5;
+        const y = (projected[1] / projected[3]) * size[1] * 0.5 + size[1] * 0.5;
+
+        return vec2.set(vec2.create(), x, y);
     }
 
     private async loadData(paths): Promise<GraferControllerData> {
