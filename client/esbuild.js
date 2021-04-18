@@ -53,13 +53,28 @@ async function main(options) {
         promises.push(esbuild.build(getDistBuild(options.watch)));
         await Promise.all(promises);
 
+        if (options.pages) {
+            copy('www/**/*', 'pages/', (err) => {
+                if (err) {
+                    // sorry future Dario, this is going to be an issue one day, you should throw!
+                    console.error(err);
+                }
+            });
 
-        copy('www/**/*', 'build/', (err) => {
-            if (err) {
-                // sorry future Dario, this is going to be an issue one day, you should throw!
-                console.error(err);
-            }
-        });
+            copy('build/**/*', 'pages/js/', (err) => {
+                if (err) {
+                    // sorry future Dario, this is going to be an issue one day, you should throw!
+                    console.error(err);
+                }
+            });
+
+            copy('../layouts/**/*', 'pages/layouts/', (err) => {
+                if (err) {
+                    // sorry future Dario, this is going to be an issue one day, you should throw!
+                    console.error(err);
+                }
+            });
+        }
 
 
         if (options['dev-server']) {

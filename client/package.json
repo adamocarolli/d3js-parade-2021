@@ -17,14 +17,13 @@
         "develop": "yarn build:scripts --watch --dev-server",
         "docs": "typedoc --out ./docs ./src --exclude 'node_modules/**/*' --mode file --includeVersion --stripInternal --skipLibCheck",
         "lint": "eslint --config ./.eslintrc.cjs \"./{src,tests,examples}/**/*.{js,ts}\"",
+        "pages": "yarn build:scripts --pages",
         "prepack": "run-s clean build lint",
         "pre-push": "run-p pre-push:**",
         "pre-push:lint": "yarn lint",
         "watch": "run-p watch:*",
         "watch:scripts": "yarn build:scripts --watch",
-        "watch:types": "yarn build:types --watch",
-        "predeploy": "yarn run build",
-        "deploy": "gh-pages -d build"
+        "watch:types": "yarn build:types --watch"
     },
     "husky": {
         "hooks": {
@@ -39,7 +38,6 @@
         "eslint": "^7.18.0",
         "eslint-config-esnext": "^4.1.0",
         "eslint-plugin-import": "^2.22.1",
-        "gh-pages": "^3.1.0",
         "globby": "^11.0.2",
         "husky": "^5.1.1",
         "live-server": "^1.2.1",

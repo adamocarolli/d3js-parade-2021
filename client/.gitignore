@@ -2,6 +2,7 @@
 node_modules
 dist/
 build/
+pages/
 
 # TypeScript intemediate files
 .rts2_cache/
