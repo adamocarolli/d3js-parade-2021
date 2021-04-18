@@ -116,7 +116,7 @@ export class TwitterView {
 
             this.context.beginPath();
             this.context.moveTo(point[0], size[1] - point[1]);
-            this.context.lineTo(bb.x, bb.y + bb.height * 0.5);
+            this.context.lineTo(bb.x * window.devicePixelRatio, (bb.y + bb.height * 0.5) * window.devicePixelRatio);
             this.context.stroke();
         }
     }
