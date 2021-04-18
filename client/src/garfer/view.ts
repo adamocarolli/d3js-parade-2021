@@ -1,4 +1,4 @@
-import {GraferController, GraferControllerData, UX} from '@uncharted.software/grafer';
+import {GraferController, GraferControllerData, UX, GraferLayerData} from '@uncharted.software/grafer';
 import {DataFile} from '@dekkai/data-source';
 import {EventEmitter} from '@dekkai/event-emitter';
 import {mat4, vec2, vec3, vec4} from 'gl-matrix';
@@ -116,7 +116,7 @@ export class GraferView extends EventEmitter {
             });
         }
 
-        const clusterLayer = {
+        const clusterLayer: GraferLayerData = {
             name: 'Clusters',
             labels: {
                 type: 'RingLabel',
@@ -163,7 +163,7 @@ export class GraferView extends EventEmitter {
             });
         }
 
-        const nodeLayer = {
+        const nodeLayer: GraferLayerData = {
             name: 'Nodes',
             nodes: {
                 type: 'Circle',
