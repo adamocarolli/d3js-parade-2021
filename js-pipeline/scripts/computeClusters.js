@@ -220,6 +220,54 @@ function buildHierarchy(nodes, edges, clusters) {
     }
 }
 
+function makeNode(id, tweets, terms, embeddings) {
+    const tweet = tweets[id];
+    return {
+        id,
+        tweetID: `${tweet.link.split('/').pop()}`,
+        tweet: { author: tweet.name, user: tweet.username, text: tweet.tweet },
+        _tweet: tweet,
+        terms: getTerms(terms, embeddings[id]),
+        parent: null,
+    };
+}
+
+function addNodeToBaseCluster(node, baseClusters) {
+    const date = node._tweet.date;
+    const components = date.split('-');
+    const year = components[0];
+    const month = components[1];
+
+    let yearCluster = baseClusters.get(year);
+    if (!yearCluster) {
+        yearCluster = {
+            id: `y-${year}`,
+            months: new Map(),
+            children: [],
+            parent: null,
+            score: -1,
+            label: `[${year}]`,
+        }
+        baseClusters.set(year, yearCluster);
+    }
+
+    let monthCluster = yearCluster.months.get(month);
+    if (!monthCluster) {
+        monthCluster = {
+            id: `m-${month}`,
+            nodes: new Map(),
+            children: [],
+            parent: yearCluster,
+            score: -1,
+            label: `[${year} - ${month}]`,
+        }
+        yearCluster.months.set(month, monthCluster);
+        yearCluster.children.push(monthCluster);
+    }
+
+    monthCluster.nodes.set(node.id, node);
+}
+
 async function main(inputFile, outputPath) {
     const scores = new Map();
 
@@ -234,7 +282,7 @@ async function main(inputFile, outputPath) {
     const embeddings = [];
     await parseJSONL('../data/adam_d3js_embeddings.jsonl', json => {
         embeddings.push(json);
-    })
+    });
 
     console.log('Loading tweets...');
     const tweets = [];
@@ -243,7 +291,8 @@ async function main(inputFile, outputPath) {
     });
 
     console.log('Loading edges...');
-    const nodes = new Map();
+    const baseClusters = new Map();
+    const allNodes = new Map();
     const edges = [];
     await parseJSONL(inputFile, json => {
         const normalized = (json.score - 0.25) / 0.75;
@@ -256,26 +305,16 @@ async function main(inputFile, outputPath) {
         scores.get(key).push(edges.length);
         edges.push(json);
 
-        if (!nodes.has(json.source)) {
-            const tweet = tweets[json.source];
-            nodes.set(json.source, {
-                id: json.source,
-                tweetID: `${tweet.link.split('/').pop()}`,
-                tweet: { author: tweet.name, user: tweet.username, text: tweet.tweet },
-                terms: getTerms(terms, embeddings[json.source]),
-                parent: null,
-            });
+        if (!allNodes.has(json.source)) {
+            const node = makeNode(json.source, tweets, terms, embeddings);
+            allNodes.set(json.source, node);
+            addNodeToBaseCluster(node, baseClusters);
         }
 
-        if (!nodes.has(json.target)) {
-            const tweet = tweets[json.target];
-            nodes.set(json.target, {
-                id: json.target,
-                tweetID: `${tweet.link.split('/').pop()}`,
-                tweet: { author: tweet.name, user: tweet.username, text: tweet.tweet },
-                terms: getTerms(terms, embeddings[json.target]),
-                parent: null,
-            });
+        if (!allNodes.has(json.target)) {
+            const node = makeNode(json.target, tweets, terms, embeddings);
+            allNodes.set(json.target, node);
+            addNodeToBaseCluster(node, baseClusters);
         }
 
         // if (key === '0.80') {
@@ -287,95 +326,133 @@ async function main(inputFile, outputPath) {
     });
 
     console.log('Generating clusters...');
-    const clusters = [];
+    const allClusters = [];
     const validEdges = [];
-    const interEdges = new Map();
-    for (let i = 1.0; i >= 0.24; i -= 0.05) {
-        const key = i.toFixed(2);
-        const scoreEdges = scores.get(key);
-        // const interEdges = [];
-        for (const edgeID of scoreEdges) {
-            const edge = edges[edgeID];
-            const a = nodes.get(edge.source);
-            const b = nodes.get(edge.target);
+    // this could be a lot faster, but this is ok for now
+    for (const year of baseClusters.values()) {
+        console.log(`${year.label}: ${year.months.size}`);
+        allClusters.push(year);
+        for (const month of year.months.values()) {
+            console.log(`${month.label}: ${month.nodes.size}`);
+            const nodes = month.nodes;
+            const clusters = [];
+            const interEdges = new Map();
 
-            const aCluster = a.parent;
-            const bCluster = b.parent;
+            allClusters.push(month);
 
-            if (!aCluster && !bCluster) {
-                clusters.push(makeCluster(clusters.length, key, a, b));
-                validEdges.push(edge);
-            } else if (aCluster && !bCluster) {
-                if (aCluster.score === key) {
-                    aCluster.children.push(b);
-                    b.parent = aCluster;
-                    validEdges.push(edge);
-                } else {
-                    if (!interEdges.has(key)) {
-                        interEdges.set(key, []);
+            for (let i = 1.0; i >= 0.24; i -= 0.05) {
+                const key = i.toFixed(2);
+                const scoreEdges = scores.get(key);
+                // const interEdges = [];
+                for (const edgeID of scoreEdges) {
+                    const edge = edges[edgeID];
+                    const a = nodes.get(edge.source);
+                    const b = nodes.get(edge.target);
+
+                    // if the month doesn't have both nodes
+                    if (!a || !b) {
+                        continue;
                     }
-                    interEdges.get(key).push(edge)
-                }
-            } else if (bCluster && !aCluster) {
-                if (bCluster.score === key) {
-                    bCluster.children.push(a);
-                    a.parent = bCluster;
-                    validEdges.push(edge);
-                } else {
-                    if (!interEdges.has(key)) {
-                        interEdges.set(key, []);
+
+                    const aCluster = a.parent;
+                    const bCluster = b.parent;
+
+                    if (!aCluster && !bCluster) {
+                        const cluster = makeCluster(clusters.length, key, a, b);
+                        clusters.push(cluster);
+                        validEdges.push(edge);
+                    } else if (aCluster && !bCluster) {
+                        if (aCluster.score === key) {
+                            aCluster.children.push(b);
+                            b.parent = aCluster;
+                            validEdges.push(edge);
+                        } else {
+                            if (!interEdges.has(key)) {
+                                interEdges.set(key, []);
+                            }
+                            interEdges.get(key).push(edge)
+                        }
+                    } else if (bCluster && !aCluster) {
+                        if (bCluster.score === key) {
+                            bCluster.children.push(a);
+                            a.parent = bCluster;
+                            validEdges.push(edge);
+                        } else {
+                            if (!interEdges.has(key)) {
+                                interEdges.set(key, []);
+                            }
+                            interEdges.get(key).push(edge)
+                        }
+                    } else {
+                        if (aCluster.score === key && bCluster.score === key) {
+                            joinCluster(aCluster, bCluster, clusters);
+                            validEdges.push(edge);
+                        } else {
+                            if (!interEdges.has(key)) {
+                                interEdges.set(key, []);
+                            }
+                            interEdges.get(key).push(edge)
+                        }
                     }
-                    interEdges.get(key).push(edge)
-                }
-            } else {
-                if (aCluster.score === key && bCluster.score === key) {
-                    joinCluster(aCluster, bCluster, clusters);
-                    validEdges.push(edge);
-                } else {
-                    if (!interEdges.has(key)) {
-                        interEdges.set(key, []);
-                    }
-                    interEdges.get(key).push(edge)
                 }
             }
-        }
-    }
 
-    // solve inter edges
-    for (const [key, edges] of interEdges) {
-        for (const edge of edges) {
-            const a = nodes.get(edge.source);
-            const b = nodes.get(edge.target);
+            // solve inter edges
+            for (const [key, edges] of interEdges) {
+                for (const edge of edges) {
+                    const a = nodes.get(edge.source);
+                    const b = nodes.get(edge.target);
 
-            if (!findCommonAncestor(a, b)) {
-                const aCluster = getTopMostAncestor(a);
-                const bCluster = getTopMostAncestor(b);
-                if (aCluster.score === key && bCluster.score === key) {
-                    // skip for now
-                    // joinCluster(aCluster, bCluster, clusters);
-                } else if (aCluster.score === key) {
-                    aCluster.children.push(bCluster);
-                    bCluster.parent = aCluster;
-                } else if (bCluster.score === key) {
-                    bCluster.children.push(aCluster);
-                    aCluster.parent = bCluster;
-                } else {
-                    clusters.push(makeCluster(clusters.length, key, aCluster, bCluster));
+                    if (!findCommonAncestor(a, b)) {
+                        const aCluster = getTopMostAncestor(a);
+                        const bCluster = getTopMostAncestor(b);
+                        if (aCluster.score === key && bCluster.score === key) {
+                            // skip for now
+                            // joinCluster(aCluster, bCluster, clusters);
+                        } else if (aCluster.score === key) {
+                            aCluster.children.push(bCluster);
+                            bCluster.parent = aCluster;
+                        } else if (bCluster.score === key) {
+                            bCluster.children.push(aCluster);
+                            aCluster.parent = bCluster;
+                        } else {
+                            const cluster = makeCluster(clusters.length, key, aCluster, bCluster);
+                            clusters.push(cluster);
+                        }
+                    }
                 }
             }
-        }
-    }
 
-    for (const cluster of clusters) {
-        if (cluster) {
-            cluster.label = computeClusterLabel(cluster);
+            let ci = 0;
+            for (const cluster of clusters) {
+                if (cluster) {
+                    ++ci;
+                    allClusters.push(cluster);
+                    if (cluster.parent === null) {
+                        month.children.push(cluster);
+                        cluster.parent = month;
+                    }
+                    cluster.label = computeClusterLabel(cluster);
+                }
+            }
+            console.log(`-- CLUSTERS: ${ci}`);
+
+            let oi = 0;
+            for (const node of nodes.values()) {
+                if (node.parent === null) {
+                    ++oi;
+                    month.children.push(node);
+                    node.parent = month;
+                }
+            }
+            console.log(`-- ORPHAN NODES: ${oi}`);
         }
     }
 
     // console.log(clusters);
 
     console.log('Building hierarchy...');
-    const { outPoints, outNodes, outClusters, outEdges } = buildHierarchy(nodes, validEdges, clusters);
+    const { outPoints, outNodes, outClusters, outEdges } = buildHierarchy(allNodes, validEdges, allClusters);
 
     console.log('Writing points JSONL file...');
     await Deno.writeTextFile(`${outputPath}/points.jsonl`, makeJSONL(outPoints));
