@@ -47,8 +47,8 @@ def load_jsonl_file(path: str) -> List:
 
 
 def vectorize(dataset: List) -> any:
-    stop_words = text.ENGLISH_STOP_WORDS.union(["http", "https", "tco", "t", "co", "amp", "rt", "bitly", "bit", "ly"])
-    vectorizer = TfidfVectorizer(max_df=1.0, max_features=None,
+    stop_words = text.ENGLISH_STOP_WORDS.union(["http", "https", "tco", "t", "co", "amp", "rt", "bitly", "bit", "ly", "js", "d3js", "d3", "javascript", "d3js_org", "gt", "lt", "amp"])
+    vectorizer = TfidfVectorizer(max_df=0.25, max_features=None,
                                  min_df=2, stop_words=stop_words,
                                  use_idf=True)
     return vectorizer.fit_transform(dataset), vectorizer.get_feature_names()
