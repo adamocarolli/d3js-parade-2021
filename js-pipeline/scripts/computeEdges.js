@@ -26,32 +26,29 @@ function similarity(A, B) {
     return similarity;
 }
 
-function parseEdges(dataset) {
-    const edges = [];
+async function writeEdges(dataset, outputFile) {
+    const file = await Deno.open(outputFile, { create: true, write: true, truncate: true });
+    const encoder = new TextEncoder();
+    const promises = [];
     let count = 0;
     for (let i = 0, n = dataset.length; i < n; ++i) {
+        promises.length = 0;
         count = 0;
-        let time = 0;
-        let timeCount = 0;
         for (let ii = i + 1; ii < n; ++ii) {
-            const start = performance.now();
             const s = similarity(dataset[i], dataset[ii]);
-            const end = performance.now();
-            time += end - start;
-            ++timeCount;
             if (!isNaN(s) && s >= 0.25) {
                 ++count;
-                edges.push({
+                promises.push(Deno.writeAll(file, encoder.encode(`${JSON.stringify({
                     source: i,
                     target: ii,
                     score: s,
-                });
+                })}\n`)));
             }
         }
+        await Promise.all(promises);
         console.log(`${i} => ${count}`);
-        console.log(`total_time:${time}ms iterations:${timeCount} average_time:${time/timeCount}ms`);
     }
-    return edges;
+    file.close();
 }
 
 async function main(inputFile, outputFile) {
@@ -59,11 +56,9 @@ async function main(inputFile, outputFile) {
     await parseJSONL(inputFile, json => {
         dataset.push(json);
     });
-    const edges = parseEdges(dataset);
 
     console.log('Writing edges JSONL file...');
-    await Deno.writeTextFile(outputFile, makeJSONL(edges));
-
+    await writeEdges(dataset, outputFile);
 
     // let r;
     // r = similarity({0: 0.5, 1: 0.5, 2: 0.5}, {0: 0.5, 2: 0.5}, 3) // 0.8164
