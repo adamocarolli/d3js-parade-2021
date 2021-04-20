@@ -21207,7 +21207,7 @@ var GraferView2 = class extends EventEmitter {
           padding: () => 0
         },
         options: {
-          visibilityThreshold: 160,
+          visibilityThreshold: 90,
           repeatLabel: -1,
           repeatGap: 64
         }
