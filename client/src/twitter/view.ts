@@ -11,6 +11,8 @@ export class TwitterView {
     private list: HTMLElement;
     private tweets: Map<string, { element: HTMLElement, point: vec3 }>;
     private twttr: any;
+    private linkColor: string;
+    private tweetTheme: string;
 
     constructor(container:HTMLElement, grafer: GraferView) {
         this.element = container;
@@ -34,6 +36,10 @@ export class TwitterView {
         this.container.appendChild(this.header);
         this.container.appendChild(this.list);
         this.element.appendChild(this.container);
+
+        const style = getComputedStyle(container);
+        this.linkColor = style.getPropertyValue('--tweet-to-node').trim();
+        this.tweetTheme = style.getPropertyValue('--tweet-theme').trim();
 
         this.initializeEvents();
     }
@@ -59,7 +65,7 @@ export class TwitterView {
                 node.label,
                 tweetContainer,
                 {
-                    // theme: 'dark',
+                    theme: this.tweetTheme,
                     width: 250,
                     // cards: 'hidden',
                     conversation: 'none',
@@ -109,7 +115,7 @@ export class TwitterView {
         const listBB = this.list.getBoundingClientRect();
         const size = this.grafer.controller.viewport.size;
         this.context.clearRect(0, 0, size[0], size[1]);
-        this.context.strokeStyle = '#1877b3';
+        this.context.strokeStyle = this.linkColor;
         this.context.lineWidth = 3;
 
         for (const tweet of this.tweets.values()) {
