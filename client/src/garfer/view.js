@@ -1,10 +1,10 @@
-import {GraferController, GraferControllerData, UX, GraferLayerData} from '@uncharted.software/grafer';
+import {GraferController, UX} from '@uncharted.software/grafer';
 import {DataFile} from '@dekkai/data-source';
 import {EventEmitter} from '@dekkai/event-emitter';
 import {mat4, vec2, vec3, vec4} from 'gl-matrix';
 import chroma from 'chroma-js';
 
-async function parseJSONL(input, cb): Promise<void> {
+async function parseJSONL(input, cb) {
     const file = await DataFile.fromRemoteSource(input);
 
     // load 1MB chunks
@@ -56,23 +56,16 @@ const kDataPackages = {
 };
 
 export class GraferView extends EventEmitter {
-    private container: HTMLElement;
-    private nodes: Map<string, any>;
-    private colors: any;
-
-    public controller: GraferController;
-
-    constructor(container: HTMLElement) {
+    constructor(container) {
         super();
         this.container = container;
         this.nodes = new Map();
         this.colors = this.getColors(container);
-        console.log(this.colors);
     }
 
-    public async init(dataPack: keyof typeof kDataPackages): Promise<void> {
+    async init(dataPack) {
         const data = await this.loadData(dataPack in kDataPackages ? kDataPackages[dataPack] : kDataPackages.adam_inferred);
-        this.controller = new GraferController(this.container as HTMLCanvasElement, data);
+        this.controller = new GraferController(this.container, data);
         this.controller.on(UX.picking.PickingManager.events.click, (event, info) => {
             this.emit('node-clicked', this.nodes.get(info.id));
         });
@@ -80,7 +73,7 @@ export class GraferView extends EventEmitter {
         vec4.set(this.controller.viewport.clearColor, color[0] / 255, color[1] / 255, color[2] / 255, color[3]); // background color: white
     }
 
-    public getWorldPointPosition(id: string | number): vec3 {
+    getWorldPointPosition(id) {
         const point = this.controller.viewport.graph.getPointIndex(id);
         const result = vec3.create();
         if (point !== null) {
@@ -95,7 +88,7 @@ export class GraferView extends EventEmitter {
         return result;
     }
 
-    public worldToPixel(position: vec3): vec2 {
+    worldToPixel(position) {
         const camera = this.controller.viewport.camera;
         const renderMatrix = mat4.mul(mat4.create(), camera.projectionMatrix, camera.viewMatrix);
         mat4.mul(renderMatrix, renderMatrix, this.controller.viewport.graph.matrix);
@@ -110,7 +103,7 @@ export class GraferView extends EventEmitter {
         return vec2.set(vec2.create(), x, y);
     }
 
-    private saveColor(key, value, colors, map) {
+    saveColor(key, value, colors, map) {
         const i = colors.indexOf(value);
         if (i === -1) {
             map.set(key, colors.length);
@@ -120,7 +113,7 @@ export class GraferView extends EventEmitter {
         }
     }
 
-    private getColors(element: HTMLElement): { background: string, values: string[], map: Map<string, number>} {
+    getColors(element) {
         const style = getComputedStyle(element);
         const background = style.getPropertyValue('--grafer-background').trim();
         const nodes = style.getPropertyValue('--grafer-nodes').trim();
@@ -140,10 +133,10 @@ export class GraferView extends EventEmitter {
             background,
             values,
             map,
-        }
+        };
     }
 
-    private async loadData(paths): Promise<GraferControllerData> {
+    async loadData(paths) {
         const points = {
             data: [],
         };
@@ -154,15 +147,15 @@ export class GraferView extends EventEmitter {
             });
         }
 
-        const clusterLayer: GraferLayerData = {
+        const clusterLayer = {
             name: 'Clusters',
             labels: {
                 type: 'RingLabel',
                 data: [],
                 mappings: {
-                    background: (): boolean => false,
-                    fontSize: (): number => 14,
-                    padding: (): number => 0,
+                    background: () => false,
+                    fontSize: () => 14,
+                    padding: () => 0,
                 },
                 options: {
                     visibilityThreshold: 90,
@@ -201,7 +194,7 @@ export class GraferView extends EventEmitter {
             });
         }
 
-        const nodeLayer: GraferLayerData = {
+        const nodeLayer = {
             name: 'Nodes',
             nodes: {
                 type: 'Circle',

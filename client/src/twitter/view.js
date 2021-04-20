@@ -1,24 +1,9 @@
-import {GraferView} from '../garfer/view';
-import {vec3} from 'gl-matrix';
-
 export class TwitterView {
-    private element: HTMLElement;
-    private grafer: GraferView;
-    private canvas: HTMLCanvasElement;
-    private context: CanvasRenderingContext2D;
-    private container: HTMLElement;
-    private header: HTMLElement;
-    private list: HTMLElement;
-    private tweets: Map<string, { element: HTMLElement, point: vec3 }>;
-    private twttr: any;
-    private linkColor: string;
-    private tweetTheme: string;
-
-    constructor(container:HTMLElement, grafer: GraferView) {
+    constructor(container, grafer) {
         this.element = container;
         this.grafer = grafer;
         this.tweets = new Map();
-        this.twttr = (window as any).twttr;
+        this.twttr = window.twttr;
         this.container = this.makeContainer();
         this.header = this.makeHeader();
         this.list = this.makeList();
@@ -44,7 +29,7 @@ export class TwitterView {
         this.initializeEvents();
     }
 
-    public async displayTweet(node: any): Promise<void> {
+    async displayTweet(node) {
         if (this.tweets.has(node.label)) {
             this.removeTweet(node.label);
         } else {
@@ -79,9 +64,9 @@ export class TwitterView {
         }
     }
 
-    private initializeEvents(): void {
+    initializeEvents() {
         let animationFrame = null;
-        const animationCallback = (): void => {
+        const animationCallback = () => {
             this.updateLinksCanvas();
             animationFrame = null;
         };
@@ -102,8 +87,8 @@ export class TwitterView {
 
         // monkey patch grafer, ugh
         // at some point the ability to listen for render/update events needs to be added to grafer
-        const old_render = (this.grafer.controller.viewport as any)._render.bind(this.grafer.controller.viewport);
-        (this.grafer.controller.viewport as any)._render = (): void => {
+        const old_render = this.grafer.controller.viewport._render.bind(this.grafer.controller.viewport);
+        this.grafer.controller.viewport._render = () => {
             old_render();
             if (animationFrame === null) {
                 animationFrame = requestAnimationFrame(animationCallback);
@@ -111,7 +96,7 @@ export class TwitterView {
         };
     }
 
-    private updateLinksCanvas(): void {
+    updateLinksCanvas() {
         const listBB = this.list.getBoundingClientRect();
         const size = this.grafer.controller.viewport.size;
         this.context.clearRect(0, 0, size[0], size[1]);
@@ -137,7 +122,7 @@ export class TwitterView {
         }
     }
 
-    private removeTweet(id: string): void {
+    removeTweet(id) {
         const tweet = this.tweets.get(id);
         if (tweet) {
             tweet.element.parentElement.removeChild(tweet.element);
@@ -145,24 +130,24 @@ export class TwitterView {
         }
     }
 
-    private clearTweets(): void {
+    clearTweets() {
         for (const tweet of this.tweets.values()) {
             tweet.element.parentElement.removeChild(tweet.element);
         }
         this.tweets.clear();
     }
 
-    private makeEmptyElement(className: string): HTMLElement {
+    makeEmptyElement(className) {
         const element = document.createElement('div');
         element.className = className;
         return element;
     }
 
-    private makeContainer(): HTMLElement {
+    makeContainer() {
         return this.makeEmptyElement('twitter-panel');
     }
 
-    private makeHeader(): HTMLElement {
+    makeHeader() {
         const header = this.makeEmptyElement('twitter-header');
 
         const title = this.makeEmptyElement('twitter-header-title');
@@ -182,11 +167,11 @@ export class TwitterView {
         return header;
     }
 
-    private makeList(): HTMLElement {
+    makeList() {
         return this.makeEmptyElement('twitter-list');
     }
 
-    private makeTweetButtons(tweet: any): HTMLElement {
+    makeTweetButtons(tweet) {
         const container = document.createElement('div');
         container.className = 'tweet-container-buttons';
         container.textContent = '✖';
@@ -198,7 +183,7 @@ export class TwitterView {
         return container;
     }
 
-    private makeTweetRaw(tweet: any): HTMLElement {
+    makeTweetRaw(tweet) {
         const tweetRaw = document.createElement('div');
         tweetRaw.className = 'tweet-raw';
 

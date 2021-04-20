@@ -52,6 +52,8 @@
         "@dekkai/data-source": "^0.2.1",
         "@dekkai/event-emitter": "^1.1.0",
         "@uncharted.software/grafer": "^0.3.1",
+        "chroma-js": "^2.1.1",
+        "gl-matrix": "^3.3.0",
         "tweakpane": "^2.4.0"
     }
 }

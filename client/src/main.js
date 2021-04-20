@@ -1,7 +1,7 @@
 import {GraferView} from './garfer/view';
 import {TwitterView} from './twitter/view';
 
-function createLoading(container): HTMLElement {
+function createLoading(container) {
     const el = document.createElement('div');
     el.className = 'data-loading';
 
@@ -18,7 +18,7 @@ function createLoading(container): HTMLElement {
     return el;
 }
 
-async function main(): Promise<void> {
+async function main() {
     const pathName = window.location.pathname;
     const pathComponents = pathName.split('/').filter(v => Boolean(v));
     const dataPack = pathComponents.pop() || 'adam_inferred';
@@ -27,9 +27,9 @@ async function main(): Promise<void> {
 
     const loading = createLoading(document.body);
 
-    grafer.init(dataPack as any).then(() => {
+    grafer.init(dataPack).then(() => {
         const twitter = new TwitterView(document.body, grafer);
-        grafer.on('node-clicked', (type: string, node: any) => {
+        grafer.on('node-clicked', (type, node) => {
             twitter.displayTweet(node);
         });
 
