@@ -208,15 +208,15 @@ var require_chroma = __commonJS((exports, module) => {
       return "[" + this._rgb.join(",") + "]";
     };
     var Color_1 = Color;
-    var chroma2 = function() {
+    var chroma3 = function() {
       var args = [], len5 = arguments.length;
       while (len5--)
         args[len5] = arguments[len5];
-      return new (Function.prototype.bind.apply(chroma2.Color, [null].concat(args)))();
+      return new (Function.prototype.bind.apply(chroma3.Color, [null].concat(args)))();
     };
-    chroma2.Color = Color_1;
-    chroma2.version = "2.1.1";
-    var chroma_1 = chroma2;
+    chroma3.Color = Color_1;
+    chroma3.version = "2.1.1";
+    var chroma_1 = chroma3;
     var unpack$1 = utils.unpack;
     var max4 = Math.max;
     var rgb2cmyk = function() {
@@ -21110,7 +21110,8 @@ GraferView = __decorate([
 // node_modules/@dekkai/data-source/build/lib/mod.js
 var import_moduleLoader4 = __toModule(require_moduleLoader());
 
-// src/garfer/view.ts
+// src/garfer/view.js
+var import_chroma_js2 = __toModule(require_chroma());
 async function parseJSONL(input, cb) {
   const file = await DataFile.fromRemoteSource(input);
   const sizeOf16MB = 1024 * 1024;
@@ -21157,6 +21158,7 @@ var GraferView2 = class extends EventEmitter {
     super();
     this.container = container;
     this.nodes = new Map();
+    this.colors = this.getColors(container);
   }
   async init(dataPack) {
     const data = await this.loadData(dataPack in kDataPackages ? kDataPackages[dataPack] : kDataPackages.adam_inferred);
@@ -21164,7 +21166,8 @@ var GraferView2 = class extends EventEmitter {
     this.controller.on(mod_exports6.picking.PickingManager.events.click, (event, info) => {
       this.emit("node-clicked", this.nodes.get(info.id));
     });
-    vec4_exports.set(this.controller.viewport.clearColor, 255, 255, 255, 1);
+    const color = (0, import_chroma_js2.default)(this.colors.background).rgba();
+    vec4_exports.set(this.controller.viewport.clearColor, color[0] / 255, color[1] / 255, color[2] / 255, color[3]);
   }
   getWorldPointPosition(id) {
     const point = this.controller.viewport.graph.getPointIndex(id);
@@ -21186,6 +21189,34 @@ var GraferView2 = class extends EventEmitter {
     const x = projected[0] / projected[3] * size[0] * 0.5 + size[0] * 0.5;
     const y = projected[1] / projected[3] * size[1] * 0.5 + size[1] * 0.5;
     return vec2_exports.set(vec2_exports.create(), x, y);
+  }
+  saveColor(key, value, colors, map) {
+    const i = colors.indexOf(value);
+    if (i === -1) {
+      map.set(key, colors.length);
+      colors.push(value);
+    } else {
+      map.set(key, i);
+    }
+  }
+  getColors(element) {
+    const style = getComputedStyle(element);
+    const background = style.getPropertyValue("--grafer-background").trim();
+    const nodes = style.getPropertyValue("--grafer-nodes").trim();
+    const nodeEdges = style.getPropertyValue("--grafer-node-edges").trim();
+    const clusters = style.getPropertyValue("--grafer-clusters").trim();
+    const clusterEdges = style.getPropertyValue("--grafer-cluster-edges").trim();
+    const values = [];
+    const map = new Map();
+    this.saveColor("nodes", nodes, values, map);
+    this.saveColor("nodeEdges", nodeEdges, values, map);
+    this.saveColor("clusters", clusters, values, map);
+    this.saveColor("clusterEdges", clusterEdges, values, map);
+    return {
+      background,
+      values,
+      map
+    };
   }
   async loadData(paths) {
     const points = {
@@ -21225,7 +21256,7 @@ var GraferView2 = class extends EventEmitter {
       const nodes = clusterLayer.labels;
       await parseJSONL(paths.clusters, (json) => {
         nodes.data.push(Object.assign({}, json, {
-          color: 2
+          color: this.colors.map.get("clusters")
         }));
       });
     }
@@ -21233,8 +21264,8 @@ var GraferView2 = class extends EventEmitter {
       const edges = clusterLayer.edges;
       await parseJSONL(paths.clusterEdges, (json) => {
         edges.data.push(Object.assign({}, json, {
-          sourceColor: 1,
-          targetColor: 1
+          sourceColor: this.colors.map.get("clusterEdges"),
+          targetColor: this.colors.map.get("clusterEdges")
         }));
       });
     }
@@ -21257,7 +21288,7 @@ var GraferView2 = class extends EventEmitter {
       await parseJSONL(paths.nodes, (json) => {
         this.nodes.set(json.id, json);
         nodes.data.push(Object.assign({}, json, {
-          color: 0
+          color: this.colors.map.get("nodes")
         }));
       });
     }
@@ -21265,21 +21296,17 @@ var GraferView2 = class extends EventEmitter {
       const edges = nodeLayer.edges;
       await parseJSONL(paths.nodeEdges, (json) => {
         edges.data.push(Object.assign({}, json, {
-          sourceColor: 1,
-          targetColor: 1
+          sourceColor: this.colors.map.get("nodeEdges"),
+          targetColor: this.colors.map.get("nodeEdges")
         }));
       });
     }
-    const colors = [
-      "#1DA1F2",
-      "#657786",
-      "#E1E8ED"
-    ];
+    const colors = this.colors.values;
     return {points, colors, layers: [nodeLayer, clusterLayer]};
   }
 };
 
-// src/twitter/view.ts
+// src/twitter/view.js
 var TwitterView = class {
   constructor(container, grafer) {
     this.element = container;
@@ -21299,6 +21326,9 @@ var TwitterView = class {
     this.container.appendChild(this.header);
     this.container.appendChild(this.list);
     this.element.appendChild(this.container);
+    const style = getComputedStyle(container);
+    this.linkColor = style.getPropertyValue("--tweet-to-node").trim();
+    this.tweetTheme = style.getPropertyValue("--tweet-theme").trim();
     this.initializeEvents();
   }
   async displayTweet(node) {
@@ -21315,6 +21345,7 @@ var TwitterView = class {
       const point = this.grafer.getWorldPointPosition(node.point);
       this.tweets.set(node.label, {element: tweetContainer, point});
       const tweet = await this.twttr.widgets.createTweet(node.label, tweetContainer, {
+        theme: this.tweetTheme,
         width: 250,
         conversation: "none",
         align: "center"
@@ -21354,7 +21385,7 @@ var TwitterView = class {
     const listBB = this.list.getBoundingClientRect();
     const size = this.grafer.controller.viewport.size;
     this.context.clearRect(0, 0, size[0], size[1]);
-    this.context.strokeStyle = "#1877b3";
+    this.context.strokeStyle = this.linkColor;
     this.context.lineWidth = 3;
     for (const tweet of this.tweets.values()) {
       const bb = tweet.element.getBoundingClientRect();
@@ -21438,7 +21469,7 @@ var TwitterView = class {
   }
 };
 
-// src/main.ts
+// src/main.js
 function createLoading(container) {
   const el = document.createElement("div");
   el.className = "data-loading";
