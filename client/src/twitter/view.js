@@ -1,10 +1,12 @@
 import {Tweet} from './tweet.js';
+import {Link} from './link.js';
 
 export class TwitterView {
     constructor(container, grafer) {
         this.element = container;
         this.grafer = grafer;
         this.tweets = new Map();
+        this.removingTweets = new Map();
         this.twttr = window.twttr;
         this.container = this.makeContainer();
         this.header = this.makeHeader();
@@ -71,6 +73,10 @@ export class TwitterView {
         this.tweetRemoved = (_, tweet) => {
             tweet.off('updated', this.tweetUpdated);
             tweet.off('removed', this.tweetRemoved);
+            if (this.removingTweets.has(tweet.label)) {
+                this.removingTweets.delete(tweet.label);
+            }
+            this.updateLinksCanvas();
         };
     }
 
@@ -81,22 +87,15 @@ export class TwitterView {
         this.context.strokeStyle = this.linkColor;
         this.context.lineWidth = 3;
 
-        for (const info of this.tweets.values()) {
-            const bb = info.tweet.element.getBoundingClientRect();
-            const point = this.grafer.worldToPixel(info.point);
+        const allTweets = [...this.tweets.values(), ...this.removingTweets.values()];
 
-            let tweetY = bb.y + bb.height * 0.5;
-
-            if (tweetY < listBB.top) {
-                tweetY = listBB.top - (listBB.top - tweetY) * 0.025;
-            } else if (tweetY > listBB.bottom) {
-                tweetY = listBB.bottom + (tweetY - listBB.bottom) * 0.025;
-            }
-
-            this.context.beginPath();
-            this.context.moveTo(point[0], size[1] - point[1]);
-            this.context.lineTo(bb.x * window.devicePixelRatio, tweetY * window.devicePixelRatio);
-            this.context.stroke();
+        for (const info of allTweets) {
+            info.link.draw(
+                this.context,
+                info.tweet,
+                listBB,
+                size
+            );
         }
     }
 
@@ -109,7 +108,9 @@ export class TwitterView {
             });
 
             const point = this.grafer.getWorldPointPosition(node.point);
-            this.tweets.set(node.label, { tweet, point });
+            const link = new Link(point, this.grafer);
+            link.setAnimation('add');
+            this.tweets.set(node.label, { tweet, link });
 
             tweet.on('updated', this.tweetUpdated);
             tweet.on('removed', this.tweetRemoved);
@@ -120,13 +121,17 @@ export class TwitterView {
         const info = this.tweets.get(id);
         if (info) {
             info.tweet.remove();
+            info.link.setAnimation('remove');
             this.tweets.delete(id);
+            this.removingTweets.set(info.tweet.label, info);
         }
     }
 
     clearTweets() {
         for (const info of this.tweets.values()) {
             info.tweet.remove();
+            info.link.setAnimation('remove');
+            this.removingTweets.set(info.tweet.label, info);
         }
         this.tweets.clear();
     }

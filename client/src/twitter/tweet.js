@@ -7,6 +7,7 @@ export class Tweet extends EventEmitter {
         this.element = document.createElement('div');
         this.element.classList.add('tweet-container', 'collapsable');
         this.container.insertBefore(this.element, this.container.firstChild);
+        this.label = node.label;
         this.active = true;
         this.transitioning = false;
 
@@ -55,8 +56,11 @@ export class Tweet extends EventEmitter {
         this.element.style.margin = '0';
         this.element.style.padding = '0';
         this.element.addEventListener('transitionend', () => {
-            this.container.removeChild(this.element);
-            this.emit('removed', this);
+            if (this.container) {
+                this.container.removeChild(this.element);
+                this.emit('removed', this);
+                this.container = null;
+            }
         });
     }
 
