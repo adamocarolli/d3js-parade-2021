@@ -54,12 +54,23 @@ export class TwitterView {
 
         // monkey patch grafer, ugh
         // at some point the ability to listen for render/update events needs to be added to grafer
-        const old_render = this.grafer.controller.viewport._render.bind(this.grafer.controller.viewport);
-        this.grafer.controller.viewport._render = () => {
+        const old_render = this.grafer.controller.viewport.render.bind(this.grafer.controller.viewport);
+        this.grafer.controller.viewport.render = () => {
             old_render();
             if (animationFrame === null) {
                 animationFrame = requestAnimationFrame(animationCallback);
             }
+        };
+
+        // initialize tweet event functions
+        this.tweetUpdated = () => {
+            if (animationFrame === null) {
+                animationFrame = requestAnimationFrame(animationCallback);
+            }
+        };
+        this.tweetRemoved = (_, tweet) => {
+            tweet.off('updated', this.tweetUpdated);
+            tweet.off('removed', this.tweetRemoved);
         };
     }
 
@@ -99,6 +110,9 @@ export class TwitterView {
 
             const point = this.grafer.getWorldPointPosition(node.point);
             this.tweets.set(node.label, { tweet, point });
+
+            tweet.on('updated', this.tweetUpdated);
+            tweet.on('removed', this.tweetRemoved);
         }
     }
 
