@@ -1,4 +1,4 @@
-import {GraferView} from './garfer/view';
+import {GraferView} from './grafer/view';
 import {TwitterView} from './twitter/view';
 
 function createLoading(container) {
