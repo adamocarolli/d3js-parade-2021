@@ -151,6 +151,16 @@ a {
     flex-direction: column;
     position: relative;
     padding-top: 12px;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.collapsable {
+    transition: height 500ms ease-in-out,
+                margin-top 100ms ease-in-out 350ms,
+                margin-bottom 100ms ease-in-out 350ms,
+                padding-top 100ms ease-in-out 350ms,
+                opacity 100ms ease-in-out 350ms;
 }
 
 .tweet-container-buttons {

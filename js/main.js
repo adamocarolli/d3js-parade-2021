@@ -21110,7 +21110,7 @@ GraferView = __decorate([
 // node_modules/@dekkai/data-source/build/lib/mod.js
 var import_moduleLoader4 = __toModule(require_moduleLoader());
 
-// src/garfer/view.js
+// src/grafer/view.js
 var import_chroma_js2 = __toModule(require_chroma());
 async function parseJSONL(input, cb) {
   const file = await DataFile.fromRemoteSource(input);
@@ -21307,16 +21307,27 @@ var GraferView2 = class extends EventEmitter {
 };
 
 // src/twitter/tweet.js
-var Tweet = class {
+var Tweet = class extends EventEmitter {
   constructor(container, node, twttr, theme, closeCB) {
+    super();
     this.container = container;
     this.element = document.createElement("div");
-    this.element.className = "tweet-container";
+    this.element.classList.add("tweet-container", "collapsable");
     this.container.insertBefore(this.element, this.container.firstChild);
+    this.label = node.label;
+    this.active = true;
+    this.transitioning = false;
     const buttons = this.makeTweetButtons(closeCB);
     this.element.appendChild(buttons);
     const tweetText = this.makeTweetRaw(node.tweet);
     this.element.appendChild(tweetText);
+    this.element.addEventListener("transitionstart", () => {
+      this.transitioning = true;
+      this.emitUpdate();
+    });
+    this.element.addEventListener("transitionend", () => {
+      this.transitioning = false;
+    });
     twttr.widgets.createTweet(node.label, this.element, {
       theme,
       width: 250,
@@ -21326,10 +21337,45 @@ var Tweet = class {
       if (tweet) {
         this.element.removeChild(tweetText);
       }
+      this.updateHeight();
+    });
+    this.element.style.height = "0";
+    requestAnimationFrame(() => {
+      this.updateHeight();
     });
   }
   remove() {
-    this.container.removeChild(this.element);
+    this.active = false;
+    this.element.style.height = "0";
+    this.element.style.opacity = "0";
+    this.element.style.margin = "0";
+    this.element.style.padding = "0";
+    this.element.addEventListener("transitionend", () => {
+      if (this.container) {
+        this.container.removeChild(this.element);
+        this.emit("removed", this);
+        this.container = null;
+      }
+    });
+  }
+  emitUpdate() {
+    if (this.transitioning) {
+      this.emit("updated", this);
+      requestAnimationFrame(() => {
+        this.emitUpdate();
+      });
+    }
+  }
+  updateHeight() {
+    if (this.active) {
+      const oldHeight = this.element.getBoundingClientRect().height;
+      this.element.classList.remove("collapsable");
+      this.element.style.height = "auto";
+      const newHeight = this.element.getBoundingClientRect().height;
+      this.element.classList.add("collapsable");
+      this.element.style.height = `${oldHeight}px`;
+      requestAnimationFrame(() => this.element.style.height = `${newHeight}px`);
+    }
   }
   makeTweetButtons(closeCB) {
     const container = document.createElement("div");
@@ -21357,12 +21403,65 @@ var Tweet = class {
   }
 };
 
+// src/twitter/link.js
+var Link = class {
+  constructor(point, grafer) {
+    this.point = point;
+    this.lastTime = 0;
+    this.progress = 0;
+    this.maxProgress = 150;
+    this.mult = 1;
+    this.grafer = grafer;
+    this.animating = false;
+  }
+  setAnimation(animation) {
+    this.animating = true;
+    this.lastTime = performance.now();
+    this.mult = animation === "remove" ? -1 : 1;
+  }
+  draw(context, tweet, listBB, size) {
+    const bb = tweet.element.getBoundingClientRect();
+    const point = this.grafer.worldToPixel(this.point);
+    let tweetY = bb.y + bb.height * 0.5;
+    if (tweetY < listBB.top) {
+      tweetY = listBB.top - (listBB.top - tweetY) * 0.025;
+    } else if (tweetY > listBB.bottom) {
+      tweetY = listBB.bottom + (tweetY - listBB.bottom) * 0.025;
+    }
+    const startX = point[0];
+    const startY = size[1] - point[1];
+    let endX = bb.x * window.devicePixelRatio;
+    let endY = tweetY * window.devicePixelRatio;
+    if (this.animating) {
+      const time = performance.now();
+      const progress = time - this.lastTime;
+      this.lastTime = time;
+      this.progress += progress * this.mult;
+      if (this.mult > 0 && this.progress >= this.maxProgress) {
+        this.progress = this.maxProgress;
+        this.animating = false;
+      } else if (this.mult < 0 && this.progress <= 0) {
+        this.progress = 0;
+        this.animating = false;
+      }
+    }
+    const len5 = Math.sqrt((endX - startX) ** 2 + (endY - startY) ** 2);
+    endX = startX + (endX - startX) / len5 * (this.progress / this.maxProgress) * len5;
+    endY = startY + (endY - startY) / len5 * (this.progress / this.maxProgress) * len5;
+    context.beginPath();
+    context.moveTo(startX, startY);
+    context.lineTo(endX, endY);
+    context.stroke();
+  }
+};
+
 // src/twitter/view.js
 var TwitterView = class {
   constructor(container, grafer) {
     this.element = container;
     this.grafer = grafer;
     this.tweets = new Map();
+    this.removingTweets = new Map();
     this.twttr = window.twttr;
     this.container = this.makeContainer();
     this.header = this.makeHeader();
@@ -21400,12 +21499,25 @@ var TwitterView = class {
         animationFrame = requestAnimationFrame(animationCallback);
       }
     });
-    const old_render = this.grafer.controller.viewport._render.bind(this.grafer.controller.viewport);
-    this.grafer.controller.viewport._render = () => {
+    const old_render = this.grafer.controller.viewport.render.bind(this.grafer.controller.viewport);
+    this.grafer.controller.viewport.render = () => {
       old_render();
       if (animationFrame === null) {
         animationFrame = requestAnimationFrame(animationCallback);
       }
+    };
+    this.tweetUpdated = () => {
+      if (animationFrame === null) {
+        animationFrame = requestAnimationFrame(animationCallback);
+      }
+    };
+    this.tweetRemoved = (_, tweet) => {
+      tweet.off("updated", this.tweetUpdated);
+      tweet.off("removed", this.tweetRemoved);
+      if (this.removingTweets.has(tweet.label)) {
+        this.removingTweets.delete(tweet.label);
+      }
+      this.updateLinksCanvas();
     };
   }
   updateLinksCanvas() {
@@ -21414,19 +21526,9 @@ var TwitterView = class {
     this.context.clearRect(0, 0, size[0], size[1]);
     this.context.strokeStyle = this.linkColor;
     this.context.lineWidth = 3;
-    for (const info of this.tweets.values()) {
-      const bb = info.tweet.element.getBoundingClientRect();
-      const point = this.grafer.worldToPixel(info.point);
-      let tweetY = bb.y + bb.height * 0.5;
-      if (tweetY < listBB.top) {
-        tweetY = listBB.top - (listBB.top - tweetY) * 0.025;
-      } else if (tweetY > listBB.bottom) {
-        tweetY = listBB.bottom + (tweetY - listBB.bottom) * 0.025;
-      }
-      this.context.beginPath();
-      this.context.moveTo(point[0], size[1] - point[1]);
-      this.context.lineTo(bb.x * window.devicePixelRatio, tweetY * window.devicePixelRatio);
-      this.context.stroke();
+    const allTweets = [...this.tweets.values(), ...this.removingTweets.values()];
+    for (const info of allTweets) {
+      info.link.draw(this.context, info.tweet, listBB, size);
     }
   }
   async displayTweet(node) {
@@ -21437,19 +21539,27 @@ var TwitterView = class {
         this.removeTweet(node.label);
       });
       const point = this.grafer.getWorldPointPosition(node.point);
-      this.tweets.set(node.label, {tweet, point});
+      const link = new Link(point, this.grafer);
+      link.setAnimation("add");
+      this.tweets.set(node.label, {tweet, link});
+      tweet.on("updated", this.tweetUpdated);
+      tweet.on("removed", this.tweetRemoved);
     }
   }
   removeTweet(id) {
     const info = this.tweets.get(id);
     if (info) {
       info.tweet.remove();
+      info.link.setAnimation("remove");
       this.tweets.delete(id);
+      this.removingTweets.set(info.tweet.label, info);
     }
   }
   clearTweets() {
     for (const info of this.tweets.values()) {
       info.tweet.remove();
+      info.link.setAnimation("remove");
+      this.removingTweets.set(info.tweet.label, info);
     }
     this.tweets.clear();
   }
