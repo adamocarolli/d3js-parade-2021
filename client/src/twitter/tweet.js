@@ -7,6 +7,7 @@ export class Tweet extends EventEmitter {
         this.element = document.createElement('div');
         this.element.classList.add('tweet-container', 'collapsable');
         this.container.insertBefore(this.element, this.container.firstChild);
+        this.node = node;
         this.label = node.label;
         this.active = true;
         this.transitioning = false;
