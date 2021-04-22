@@ -28,17 +28,17 @@ function createSnapshotButton(container, text, cb) {
     container.appendChild(el);
 }
 
-// function easeInOutCubic(x) {
-//     return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
-// }
-//
+function easeInOutCubic(x) {
+    return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+}
+
 // function easeOutCubic(x) {
 //     return 1 - Math.pow(1 - x, 3);
 // }
 
-function easeOutQuart(x) {
-    return 1 - Math.pow(1 - x, 4);
-}
+// function easeOutQuart(x) {
+//     return 1 - Math.pow(1 - x, 4);
+// }
 
 function createSnapshotMenu(element, grafer, twitter) {
     const el = document.createElement('div');
@@ -63,9 +63,9 @@ function createSnapshotMenu(element, grafer, twitter) {
         console.log(snapshots[snapshots.length - 1]);
     });
 
-    const tweetDelay = 350;
+    const tweetDelay = 200;
     const animationDuration = 1500;
-    const maxAnimationDuration = 10000;
+    const maxAnimationDuration = 20000;
     function showSnapshot(info) {
         transitioning = true;
 
@@ -83,7 +83,7 @@ function createSnapshotMenu(element, grafer, twitter) {
                 transitioning = false;
                 grafer.controller.viewport.camera.position = info.cameraPosition;
             } else {
-                const progress = easeOutQuart(currentTime / targetTime);
+                const progress = easeInOutCubic(currentTime / targetTime);
                 grafer.controller.viewport.camera.position[0] = startPosition[0] + normal[0] * distance * progress;
                 grafer.controller.viewport.camera.position[1] = startPosition[1] + normal[1] * distance * progress;
                 grafer.controller.viewport.camera.position[2] = startPosition[2] + normal[2] * distance * progress;
