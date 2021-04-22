@@ -28,13 +28,13 @@ function createSnapshotButton(container, text, cb) {
     container.appendChild(el);
 }
 
-function easeInOutCubic(x) {
-    return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
-}
-
-function easeOutCubic(x) {
-    return 1 - Math.pow(1 - x, 3);
-}
+// function easeInOutCubic(x) {
+//     return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+// }
+//
+// function easeOutCubic(x) {
+//     return 1 - Math.pow(1 - x, 3);
+// }
 
 function easeOutQuart(x) {
     return 1 - Math.pow(1 - x, 4);
@@ -60,7 +60,6 @@ function createSnapshotMenu(element, grafer, twitter) {
             cameraPosition,
             nodes,
         });
-
         console.log(snapshots[snapshots.length - 1]);
     });
 
@@ -95,7 +94,7 @@ function createSnapshotMenu(element, grafer, twitter) {
 
             }
             grafer.controller.render();
-        }
+        };
         animate();
 
 
