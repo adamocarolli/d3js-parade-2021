@@ -74,6 +74,11 @@ function buildHierarchy(cluster, nodeRadius, paddingMult) {
     return root.children[0];
 }
 
+/* ================================================================================
+ * CLUSTER LAYOUT 12 MONTH RINGS
+ * ================================================================================
+ */
+
 /* DARIO!!! */
 const k15deg = Math.PI / 12;
 function computeClusterCenterRadius(maxMonthRadiusInYear, prevLevelsRadius) {

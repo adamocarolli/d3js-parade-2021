@@ -1,6 +1,7 @@
 import {makeJSONL, parseJSONL, loadFileJSON} from './JSONL.js'
 import {computeClusterLabel} from './computeClusterLabels.js';
 import {computeCurrentLevelsLayout} from './computeClusterLayout.js';
+import {computeLayout as computeClusterLayout} from './computeClusterLayoutSpiral.js';
 
 
 function easeOutCubic(x) {
@@ -201,19 +202,22 @@ function computeLayout(clusters) {
         // clusters.get('2009'),
         // clusters.get('2010'),
         // clusters.get('2011'),
+        // clusters.get('2012'),
+        // clusters.get('2013'),
+        // clusters.get('2014'),
         ...clusters.values(),
     ]
-    return computeCurrentLevelsLayout(data, 0.1, 2, kPaddingMult);
+    return computeClusterLayout(data, 0.1, kPaddingMult);
 }
 
-function unfoldLayout(root, nodes, edges) {
+function unfoldLayout(clusters, nodes, edges) {
     const outPoints = [];
     const outNodes = [];
     const outClusters = [];
     const outEdges = [];
 
     const fauxRoot = {
-        children: [root],
+        children: clusters,
         x: 0,
         y: 0,
     }
@@ -412,10 +416,10 @@ async function main(inputFile, outputPath) {
     // console.log(clusters);
 
     console.log('Computing layout...');
-    const root = computeLayout(baseClusters);
+    const clusters = computeLayout(baseClusters);
 
     console.log('Unfolding hierarchy...');
-    const { outPoints, outNodes, outClusters, outEdges } = unfoldLayout(root, allNodes, validEdges);
+    const { outPoints, outNodes, outClusters, outEdges } = unfoldLayout(clusters, allNodes, validEdges);
 
     console.log('Writing points JSONL file...');
     await Deno.writeTextFile(`${outputPath}/points.jsonl`, makeJSONL(outPoints));
