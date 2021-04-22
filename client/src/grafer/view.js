@@ -158,9 +158,9 @@ export class GraferView extends EventEmitter {
                     padding: () => 0,
                 },
                 options: {
-                    visibilityThreshold: 90,
-                    repeatLabel: -1,
-                    repeatGap: 64,
+                    visibilityThreshold: 95,
+                    repeatLabel: 2,
+                    repeatGap: 32,
                     // fade: 0.65,
                     // desaturate: 1.0,
                 },
