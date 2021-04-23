@@ -79,36 +79,20 @@ function buildHierarchy(cluster, nodeRadius, paddingMult) {
  * ================================================================================
  */
 
-// https://en.wikipedia.org/wiki/Fermat%27s_spiral
-// https://en.wikipedia.org/wiki/Archimedean_spiral
-// https://en.wikipedia.org/wiki/Golden_spiral
-
-function easeOutCubic(x) {
-    return 1 - Math.pow(1 - x, 3);
+// Determine how much a circle is colliding by
+const circleOverlap = (c1, c2) => {
+    const x = c2.x - c1.x;
+    const y = c2.y - c1.y;
+    const len = Math.sqrt(x ** 2 + y ** 2);
+    return (c1.r + c2.r) - len;
 }
 
-function easeInCubic(x) {
-    return Math.pow(x, 3);
-}
-
-function easeInSine(x) {
-    return 1 - Math.cos((x * Math.PI) / 2);
-}
-
-export const computeLayout = (yearClusters, nodeRadius, paddingMult = 0.1) => { // array of years, each year is a cluster, months as children
-    // 1. Compute the max radius among all months
-    // 2. Using the max radius among all months compute the distance
-    //    between coils of the spiral. To get inputs into Fibonacci Spiral
-    // 3. Compute the center point of every month cluster
-
+export const computeLayout = (yearClusters, nodeRadius, paddingMult = 0.1) => {
     // Sort years in ascending order
     yearClusters = yearClusters.sort((y1, y2) => y1._value - y2._value);
 
-    // Keep a reference to all circle packed monthly clusters
+    // Keep a reference to all monthly clusters
     const monthClusters = [];
-    // Keep track of the max radius among all circle packed monthly clusters
-    // let maxMonthClusterRadius = 0;
-    // let sumOfMonthClusterRadiuses = 0;
 
     // 1. Compute the max radius among all months
     for (const yearCluster of yearClusters) {
@@ -117,24 +101,10 @@ export const computeLayout = (yearClusters, nodeRadius, paddingMult = 0.1) => { 
         monthClustersOfCurrYear = monthClustersOfCurrYear.sort((m1, m2) => m1._value - m2._value);
         for (const monthCluster of monthClustersOfCurrYear) {
             // Circle pack each month cluster
-            // Set the initial curr node result as 1 for the initial calculation to calculate
-            // the static radius' of the months cluster
-            // const packedMonthCluster = buildHierarchy(monthCluster, 1, paddingMult);
             monthClusters.push(monthCluster);
-            // maxMonthClusterRadius = Math.max(maxMonthClusterRadius, packedMonthCluster.r);
-            // sumOfMonthClusterRadiuses += packedMonthCluster.r;
         }
     }
 
-    // 2. Using the max radius among all months compute fibonacci spiral
-    //    input variables
-    // TODO: How to decide angle increment?? (maybe try out a couple manually???)
-    // const angleIncrement = Math.PI / 6;
-    // const angleIncrement = 2 * Math.PI / 180;
-    // TODO: This is an approximate value we should calculate a more
-    //       densely packed value somehow
-    // Represents the outer most circle in the fibonacci spiral ie.
-    // if you made a circle that follows the outermost coils growth
 
     const packedMonthClusters = [];
     let radiusSum = 0;
@@ -144,56 +114,38 @@ export const computeLayout = (yearClusters, nodeRadius, paddingMult = 0.1) => { 
         packedMonthClusters.push(packedMonthCluster);
     }
 
-    const outerCircleRadius = 50000;
-    const baseCoilSpacing = 40;
-
-    const coilSpacings = [
-        40,
-        200,
-        1000,
-        3000,
-        7000,
-        14000,
-        19000,
-        20000,
-    ];
-
-    let angleIncrement = 0;
+    let angle = 0;
     let x = 1, y = 1;
     let len;
-    let currentRadiusSum = 0;
-    let currentCoil = 0;
-    let currentCoilSpacing = coilSpacings[0];
-    let previousCoilRadius = 0;
+    let currentRevolutionSpacing = 40;
+    let currRevolutionClusters = [];
+
     // 3. Compute the center point of every month cluster
     for (let i = 0, n = packedMonthClusters.length; i < n; ++i) {
         const packedMonthCluster = packedMonthClusters[i];
-        currentRadiusSum += packedMonthCluster.r;
 
         len = Math.sqrt(x ** 2 + y ** 2);
-        angleIncrement += Math.atan2(packedMonthCluster.r, len);
+        angle += Math.atan2(packedMonthCluster.r, len);
 
-        const ratio = i / n;
-        const angle = angleIncrement;
-        const coilNumber = Math.floor(angleIncrement / (Math.PI * 2));
-        if (coilNumber > currentCoil) {
-            currentCoil = coilNumber;
-            previousCoilRadius += currentCoilSpacing;
-            currentCoilSpacing = coilSpacings[coilNumber];
+        let hasOverlap = true;
+        while(hasOverlap) {
+            x = Math.cos(angle) * currentRevolutionSpacing;
+            y = Math.sin(angle) * currentRevolutionSpacing;
+
+            // Scale the nodes with the current circle's radius ratio of the spiral
+            packedMonthCluster.x = x;
+            packedMonthCluster.y = y;
+            hasOverlap = currRevolutionClusters.some(currentRevolutionCluster =>
+                circleOverlap(currentRevolutionCluster, packedMonthCluster) > 0);
+            if(hasOverlap) {
+                currentRevolutionSpacing += 0.1;
+            }
         }
 
-        const ringPercent = (angleIncrement % (Math.PI * 2)) / (Math.PI * 2);
-        const spiralRadius = previousCoilRadius + (currentCoilSpacing * ringPercent);
-
-        x = Math.cos(angle) * spiralRadius;
-        y = Math.sin(angle) * spiralRadius;
-
         len = Math.sqrt(x ** 2 + y ** 2);
-        angleIncrement += Math.atan2(packedMonthCluster.r, len);
+        angle += Math.atan2(packedMonthCluster.r, len);
 
-        // Scale the nodes with the current circle's radius ratio of the spiral
-        packedMonthCluster.x = x;
-        packedMonthCluster.y = y;
+        currRevolutionClusters.push(packedMonthCluster);
     }
 
     return packedMonthClusters;
