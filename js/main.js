@@ -21114,12 +21114,12 @@ var import_moduleLoader4 = __toModule(require_moduleLoader());
 var import_chroma_js2 = __toModule(require_chroma());
 async function parseJSONL(input, cb) {
   const file = await DataFile.fromRemoteSource(input);
-  const sizeOf16MB = 1024 * 1024;
+  const sizeOf1MB = 1024 * 1024;
   const byteLength = await file.byteLength;
   const decoder = new TextDecoder();
   const lineBreak = "\n".charCodeAt(0);
-  for (let offset = 0; offset <= byteLength; offset += sizeOf16MB) {
-    const chunkEnd = Math.min(offset + sizeOf16MB, byteLength);
+  for (let offset = 0; offset <= byteLength; offset += sizeOf1MB) {
+    const chunkEnd = Math.min(offset + sizeOf1MB, byteLength);
     const chunk = await file.loadData(offset, chunkEnd);
     const view = new DataView(chunk);
     let start = 0;
@@ -21238,9 +21238,9 @@ var GraferView2 = class extends EventEmitter {
           padding: () => 0
         },
         options: {
-          visibilityThreshold: 90,
-          repeatLabel: -1,
-          repeatGap: 64
+          visibilityThreshold: 95,
+          repeatLabel: 2,
+          repeatGap: 32
         }
       },
       edges: {
@@ -21613,8 +21613,8 @@ function createSnapshotButton(container, text, cb) {
   el.addEventListener("click", cb);
   container.appendChild(el);
 }
-function easeOutQuart(x) {
-  return 1 - Math.pow(1 - x, 4);
+function easeInOutCubic(x) {
+  return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
 }
 function createSnapshotMenu(element, grafer, twitter) {
   const el = document.createElement("div");
@@ -21635,9 +21635,9 @@ function createSnapshotMenu(element, grafer, twitter) {
     });
     console.log(snapshots[snapshots.length - 1]);
   });
-  const tweetDelay = 350;
+  const tweetDelay = 200;
   const animationDuration = 1500;
-  const maxAnimationDuration = 1e4;
+  const maxAnimationDuration = 2e4;
   function showSnapshot(info) {
     transitioning = true;
     const startPosition = vec3_exports.clone(grafer.controller.viewport.camera.position);
@@ -21652,7 +21652,7 @@ function createSnapshotMenu(element, grafer, twitter) {
         transitioning = false;
         grafer.controller.viewport.camera.position = info.cameraPosition;
       } else {
-        const progress = easeOutQuart(currentTime / targetTime);
+        const progress = easeInOutCubic(currentTime / targetTime);
         grafer.controller.viewport.camera.position[0] = startPosition[0] + normal[0] * distance4 * progress;
         grafer.controller.viewport.camera.position[1] = startPosition[1] + normal[1] * distance4 * progress;
         grafer.controller.viewport.camera.position[2] = startPosition[2] + normal[2] * distance4 * progress;
