@@ -34,7 +34,7 @@ function liveServer(options = {}) {
 
 function getDistBuild(watch) {
     return {
-        entryPoints: [ 'src/main.ts' ],
+        entryPoints: [ 'src/main.js' ],
         bundle: true,
         outdir: 'build/',
         target: 'es2020',

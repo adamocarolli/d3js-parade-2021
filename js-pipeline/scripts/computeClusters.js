@@ -1,6 +1,7 @@
 import {makeJSONL, parseJSONL, loadFileJSON} from './JSONL.js'
-import {packEnclose} from 'https://cdn.skypack.dev/d3-hierarchy/src/pack/siblings.js';
 import {computeClusterLabel} from './computeClusterLabels.js';
+import {computeCurrentLevelsLayout} from './computeClusterLayout.js';
+import {computeLayout as computeClusterLayout} from './computeClusterLayoutSpiral.js';
 
 
 function easeOutCubic(x) {
@@ -76,35 +77,26 @@ function getTopMostAncestor(node) {
     return parent;
 }
 
-function addChildrenToLevel(cluster, levels, currentLevel) {
-    const level = currentLevel + 1;
-    if (!levels[level]) {
-        levels[level] = [];
-    }
-
-    for (const child of cluster.children) {
-        if (child.children) {
-            levels[level].push(child);
-            addChildrenToLevel(child, levels, level);
-        }
-    }
-}
-
 const kPaddingMult = 1.1;
 function addChildrenToOutput(cluster, points, nodes, clusters) {
     for (const node of cluster.children) {
         const pointID = points.length;
 
         // offset the points by the cluster's position
-        node.x += cluster.x;
-        node.y += cluster.y;
+        try {
+            node.x += cluster.x;
+            node.y += cluster.y;
+        } catch (e) {
+            console.log(node);
+            throw e;
+        }
 
         points.push({
             id: pointID,
             x: node.x,
             y: node.y,
             z: 0,
-            radius: node.children ? node.r / kPaddingMult : 1,
+            radius: node.children ? node.r / kPaddingMult : node.r / 2,
         });
 
         if (node.children) {
@@ -140,86 +132,6 @@ function addEdgesToOutput(nodes, edges, out) {
     }
 }
 
-let gID = 0;
-function addChildren(parent, children) {
-    for (const child of children) {
-        let node;
-        if (child.children) {
-            node = {
-                id: gID++,
-                x: 0,
-                y: 0,
-                name: child.label,
-                children: [],
-            }
-            addChildren(node, child.children);
-        } else {
-            node = {
-                id: gID++,
-                x: 0,
-                y: 0,
-                r: 2,
-                name: `${child.tweetID}`,
-                tweet: child.tweet,
-                ptr: child,
-            }
-        }
-        parent.children.push(node);
-    }
-}
-
-function buildHierarchy(nodes, edges, clusters) {
-    const root = {
-        id: 'c-root',
-        children: [],
-        x: 0,
-        y: 0,
-    };
-
-    // find clusters without a parent
-    const rootChildren = [];
-    for (const cluster of clusters) {
-        if (cluster && cluster.parent === null) {
-            rootChildren.push(cluster);
-        }
-    }
-
-    // find all nodes without a parent
-    // for (const node of nodes.values()) {
-    //     if (node.parent === null) {
-    //         rootChildren.push(node);
-    //     }
-    // }
-
-    addChildren(root, rootChildren);
-
-    const levels = [[root]];
-    addChildrenToLevel(root, levels, 0);
-
-    // pack circles by levels in reverse order
-    for (let i = levels.length - 1; i >= 0; --i) {
-        for (const cluster of levels[i]) {
-            const radius = packEnclose(cluster.children);
-            cluster.r = radius * 1.05 * kPaddingMult;
-        }
-    }
-
-    const outPoints = [];
-    const outNodes = [];
-    const outClusters = [];
-    const outEdges = [];
-
-    addChildrenToOutput(root, outPoints, outNodes, outClusters);
-    addEdgesToOutput(nodes, edges, outEdges);
-
-    return {
-        outPoints,
-        outNodes,
-        outClusters,
-        outEdges,
-    }
-}
-
 function makeNode(id, tweets, terms, embeddings) {
     const tweet = tweets[id];
     return {
@@ -230,6 +142,21 @@ function makeNode(id, tweets, terms, embeddings) {
         terms: getTerms(terms, embeddings[id]),
         parent: null,
     };
+}
+
+const kNumberToMonth = {
+    '01': 'January',
+    '02': 'February',
+    '03': 'March',
+    '04': 'April',
+    '05': 'May',
+    '06': 'June',
+    '07': 'July',
+    '08': 'August',
+    '09': 'September',
+    '10': 'October',
+    '11': 'November',
+    '12': 'December',
 }
 
 function addNodeToBaseCluster(node, baseClusters) {
@@ -247,6 +174,7 @@ function addNodeToBaseCluster(node, baseClusters) {
             parent: null,
             score: -1,
             label: `[${year}]`,
+            _value: parseInt(year, 10),
         }
         baseClusters.set(year, yearCluster);
     }
@@ -259,13 +187,49 @@ function addNodeToBaseCluster(node, baseClusters) {
             children: [],
             parent: yearCluster,
             score: -1,
-            label: `[${year} - ${month}]`,
+            label: `[${year} - ${kNumberToMonth[month]}]`,
+            _value: parseInt(month, 10),
         }
         yearCluster.months.set(month, monthCluster);
         yearCluster.children.push(monthCluster);
     }
 
     monthCluster.nodes.set(node.id, node);
+}
+
+function computeLayout(clusters) {
+    const data = [
+        // clusters.get('2009'),
+        // clusters.get('2010'),
+        // clusters.get('2011'),
+        // clusters.get('2012'),
+        // clusters.get('2013'),
+        // clusters.get('2014'),
+        ...clusters.values(),
+    ]
+    return computeClusterLayout(data, 0.1, kPaddingMult);
+}
+
+function unfoldLayout(clusters, nodes, edges) {
+    const outPoints = [];
+    const outNodes = [];
+    const outClusters = [];
+    const outEdges = [];
+
+    const fauxRoot = {
+        children: clusters,
+        x: 0,
+        y: 0,
+    }
+    addChildrenToOutput(fauxRoot, outPoints, outNodes, outClusters);
+    addEdgesToOutput(nodes, edges, outEdges);
+
+    return {
+        outPoints,
+        outNodes,
+        outClusters,
+        outEdges,
+    }
 }
 
 async function main(inputFile, outputPath) {
@@ -435,7 +399,7 @@ async function main(inputFile, outputPath) {
                     cluster.label = computeClusterLabel(cluster);
                 }
             }
-            console.log(`-- CLUSTERS: ${ci}`);
+            // console.log(`-- CLUSTERS: ${ci}`);
 
             let oi = 0;
             for (const node of nodes.values()) {
@@ -445,14 +409,17 @@ async function main(inputFile, outputPath) {
                     node.parent = month;
                 }
             }
-            console.log(`-- ORPHAN NODES: ${oi}`);
+            // console.log(`-- ORPHAN NODES: ${oi}`);
         }
     }
 
     // console.log(clusters);
 
-    console.log('Building hierarchy...');
-    const { outPoints, outNodes, outClusters, outEdges } = buildHierarchy(allNodes, validEdges, allClusters);
+    console.log('Computing layout...');
+    const clusters = computeLayout(baseClusters);
+
+    console.log('Unfolding hierarchy...');
+    const { outPoints, outNodes, outClusters, outEdges } = unfoldLayout(clusters, allNodes, validEdges);
 
     console.log('Writing points JSONL file...');
     await Deno.writeTextFile(`${outputPath}/points.jsonl`, makeJSONL(outPoints));

@@ -55,6 +55,7 @@ module.exports = {
             rules: {
                 'import/no-namespace': 0,
                 'import/prefer-default-export': 0,
+                'class-methods-use-this': 0,
             },
         },
     ],
