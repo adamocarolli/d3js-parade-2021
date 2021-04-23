@@ -8,13 +8,13 @@ async function parseJSONL(input, cb) {
     const file = await DataFile.fromRemoteSource(input);
 
     // load 1MB chunks
-    const sizeOf16MB = 1024 * 1024;
+    const sizeOf1MB = 1024 * 1024;
     const byteLength = await file.byteLength;
     const decoder = new TextDecoder();
     const lineBreak = '\n'.charCodeAt(0);
 
-    for(let offset = 0; offset <= byteLength; offset += sizeOf16MB) {
-        const chunkEnd = Math.min(offset + sizeOf16MB, byteLength);
+    for(let offset = 0; offset <= byteLength; offset += sizeOf1MB) {
+        const chunkEnd = Math.min(offset + sizeOf1MB, byteLength);
         const chunk = await file.loadData(offset, chunkEnd);
         const view = new DataView(chunk);
         let start = 0;
