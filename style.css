@@ -109,7 +109,8 @@ a {
 
 .twitter-panel {
     width: 280px;
-    height: 100%;
+    height: auto;
+    max-height: 100%;
     position: absolute;
     right: 0;
     top: 0;
@@ -181,10 +182,10 @@ a {
 
 .collapsable {
     transition: height 500ms ease-in-out,
-    margin-top 100ms ease-in-out 350ms,
-    margin-bottom 100ms ease-in-out 350ms,
-    padding-top 100ms ease-in-out 350ms,
-    opacity 100ms ease-in-out 350ms;
+                margin-top 100ms ease-in-out 350ms,
+                margin-bottom 100ms ease-in-out 350ms,
+                padding-top 100ms ease-in-out 350ms,
+                opacity 100ms ease-in-out 350ms;
 }
 
 .tweet-container-buttons {
