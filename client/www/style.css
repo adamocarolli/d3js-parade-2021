@@ -1,25 +1,26 @@
 :root {
     /* grafer colours */
-    --grafer-background: #FFFFFF;
-    --grafer-nodes: #1DA1F2;
-    --grafer-node-edges: #657786;
-    --grafer-clusters: #E1E8ED;
+    --grafer-background: #242933;
+    --grafer-nodes: #6da7de;
+    --grafer-node-edges: #ff38ba;
+    --grafer-clusters: #4c566a;
     --grafer-cluster-edges: #AAB8C2;
 
     /* tweets colours */
     --tweet-theme: light;
-    --tweet-to-node: #1877b3;
-    --tweet-container-background: #E1E8ED;
-    --tweet-container-border: #1877b3;
+    --tweet-to-node: #ee266d;
+    --tweet-container-background: #14171A;
+    --tweet-container-border: transparent;
     --tweet-container-close: #AAB8C2;
     --tweet-raw-backgroung: #FFFFFF;
+    --tweet-raw-border: #BFCFDF;
     --tweet-raw-text: #000000;
     --tweet-raw-user: #6e767d;
 
     /* loading widget colours */
-    --loading-text: #657786;
-    --loading-ring-primary: #1DA1F2;
-    --loading-ring-secondary: #657786;
+    --loading-text: #6da7de;
+    --loading-ring-primary: #ff38ba;
+    --loading-ring-secondary: #6da7de;
     --loading-ring-spin-time: 0.85s;
 }
 
@@ -156,6 +157,13 @@ a {
     flex-grow: 1;
     overflow-x: hidden;
     overflow-y: scroll;
+
+    -ms-overflow-style: none;  /* Internet Explorer 10+ */
+    scrollbar-width: none;  /* Firefox */
+}
+
+.twitter-list::-webkit-scrollbar {
+    display: none;  /* Safari and Chrome */
 }
 
 .tweet-container {
@@ -173,10 +181,10 @@ a {
 
 .collapsable {
     transition: height 500ms ease-in-out,
-                margin-top 100ms ease-in-out 350ms,
-                margin-bottom 100ms ease-in-out 350ms,
-                padding-top 100ms ease-in-out 350ms,
-                opacity 100ms ease-in-out 350ms;
+    margin-top 100ms ease-in-out 350ms,
+    margin-bottom 100ms ease-in-out 350ms,
+    padding-top 100ms ease-in-out 350ms,
+    opacity 100ms ease-in-out 350ms;
 }
 
 .tweet-container-buttons {
@@ -195,6 +203,7 @@ a {
     background-color: var(--tweet-raw-backgroung);
     /* color: white; */
     border-radius: 12px;
+    border: 1px solid var(--tweet-raw-border);
     padding: 16px;
     box-sizing: border-box;
     color: var(--tweet-raw-text);
