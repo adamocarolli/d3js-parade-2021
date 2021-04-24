@@ -96,16 +96,41 @@ function createSnapshotMenu(element, grafer, twitter) {
             grafer.controller.render();
         };
         animate();
+        // grafer.controller.viewport.camera.position = info.cameraPosition;
 
+        function updateTweets() {
+            // TODO: Track positioning of Tweets during the snapshot and then re-add them
+            //       in the same order to avoid "crossed-wires".
 
-        grafer.controller.viewport.camera.position = info.cameraPosition;
-        twitter.clearTweets();
-        let delay = targetTime * 0.9;
-        for (const nodeID of info.nodes) {
-            const node = grafer.nodes.get(nodeID);
-            setTimeout(() => twitter.displayTweet(node), delay);
-            delay += tweetDelay;
+            // Find Tweets to add/remove by comparing the differences between current tweets
+            // and the the snapshots tweets
+            const snapshotTweets = new Set();
+            const snapshotTweetsToNodesMap = new Map();
+            for (const nodeID of info.nodes) {
+                const node = grafer.nodes.get(nodeID);
+                snapshotTweets.add(node.label);
+                snapshotTweetsToNodesMap.set(node.label, node);
+            }
+            const currentTweets = new Set(twitter.tweets.keys());
+
+            // Get tweets to remove
+            const tweetsToRemove = [...currentTweets].filter(tweet => !snapshotTweets.has(tweet));
+            // Get tweets to append
+            const tweetsToAdd = [...snapshotTweets].filter(tweet => !currentTweets.has(tweet));
+
+            // Update tweets
+            let delay = targetTime * 0.1;
+            for (const tweet of tweetsToRemove) {
+                setTimeout(() => twitter.removeTweet(tweet), delay);
+                delay += tweetDelay;
+            }
+            delay = targetTime * 0.9;
+            for (const tweet of tweetsToAdd) {
+                setTimeout(() => twitter.displayTweet(snapshotTweetsToNodesMap.get(tweet)), delay);
+                delay += tweetDelay*3;
+            }
         }
+        updateTweets();
     }
 
     createSnapshotButton(el, 'PREVIOUS', () => {
