@@ -21664,14 +21664,29 @@ function createSnapshotMenu(element, grafer, twitter) {
       grafer.controller.render();
     };
     animate();
-    grafer.controller.viewport.camera.position = info.cameraPosition;
-    twitter.clearTweets();
-    let delay = targetTime * 0.9;
-    for (const nodeID of info.nodes) {
-      const node = grafer.nodes.get(nodeID);
-      setTimeout(() => twitter.displayTweet(node), delay);
-      delay += tweetDelay;
+    function updateTweets() {
+      const snapshotTweets = new Set();
+      const snapshotTweetsToNodesMap = new Map();
+      for (const nodeID of info.nodes) {
+        const node = grafer.nodes.get(nodeID);
+        snapshotTweets.add(node.label);
+        snapshotTweetsToNodesMap.set(node.label, node);
+      }
+      const currentTweets = new Set(twitter.tweets.keys());
+      const tweetsToRemove = [...currentTweets].filter((tweet) => !snapshotTweets.has(tweet));
+      const tweetsToAdd = [...snapshotTweets].filter((tweet) => !currentTweets.has(tweet));
+      let delay = targetTime * 0.1;
+      for (const tweet of tweetsToRemove) {
+        setTimeout(() => twitter.removeTweet(tweet), delay);
+        delay += tweetDelay;
+      }
+      delay = targetTime * 0.9;
+      for (const tweet of tweetsToAdd) {
+        setTimeout(() => twitter.displayTweet(snapshotTweetsToNodesMap.get(tweet)), delay);
+        delay += tweetDelay * 3;
+      }
     }
+    updateTweets();
   }
   createSnapshotButton(el, "PREVIOUS", () => {
     if (!transitioning && current > 0) {
