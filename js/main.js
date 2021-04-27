@@ -21592,6 +21592,113 @@ var TwitterView = class {
   }
 };
 
+// src/utils/easings.js
+function easeInOutCubic(x) {
+  return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+}
+
+// src/snapshots/view.js
+var SnapshotsView = class {
+  constructor(container, grafer, twitter) {
+    this.element = container;
+    this.grafer = grafer;
+    this.twitter = twitter;
+    this.createSnapshotMenu();
+  }
+  createSnapshotMenu() {
+    const self2 = this;
+    const el = document.createElement("div");
+    el.className = "snapshot-menu";
+    const snapshots = [];
+    let current = -1;
+    let transitioning = false;
+    this.createSnapshotButton(el, "TAKE SNAPSHOT", () => {
+      const cameraPosition = new Float32Array(this.grafer.controller.viewport.camera.position);
+      const nodes = [];
+      for (const info of this.twitter.tweets.values()) {
+        nodes.push(info.tweet.node.id);
+      }
+      current = snapshots.length;
+      snapshots.push({
+        cameraPosition,
+        nodes
+      });
+      console.log(snapshots[snapshots.length - 1]);
+    });
+    const tweetDelay = 200;
+    const animationDuration = 1500;
+    const maxAnimationDuration = 2e4;
+    function showSnapshot(info) {
+      transitioning = true;
+      const startPosition = vec3_exports.clone(self2.grafer.controller.viewport.camera.position);
+      const normal = vec3_exports.subtract(vec3_exports.create(), info.cameraPosition, startPosition);
+      const distance4 = vec3_exports.len(normal);
+      vec3_exports.set(normal, normal[0] / distance4, normal[1] / distance4, normal[2] / distance4);
+      const targetTime = Math.min(maxAnimationDuration, animationDuration * Math.max(1, Math.abs(info.cameraPosition[2] - startPosition[2]) * 1e-3));
+      let currentTime = 0;
+      let time = performance.now();
+      const animate = () => {
+        if (currentTime >= targetTime) {
+          transitioning = false;
+          self2.grafer.controller.viewport.camera.position = info.cameraPosition;
+        } else {
+          const progress = easeInOutCubic(currentTime / targetTime);
+          self2.grafer.controller.viewport.camera.position[0] = startPosition[0] + normal[0] * distance4 * progress;
+          self2.grafer.controller.viewport.camera.position[1] = startPosition[1] + normal[1] * distance4 * progress;
+          self2.grafer.controller.viewport.camera.position[2] = startPosition[2] + normal[2] * distance4 * progress;
+          const now = performance.now();
+          currentTime += now - time;
+          time = now;
+          requestAnimationFrame(() => animate());
+        }
+        self2.grafer.controller.render();
+      };
+      animate();
+      function updateTweets() {
+        const snapshotTweets = new Set();
+        const snapshotTweetsToNodesMap = new Map();
+        for (const nodeID of info.nodes) {
+          const node = self2.grafer.nodes.get(nodeID);
+          snapshotTweets.add(node.label);
+          snapshotTweetsToNodesMap.set(node.label, node);
+        }
+        const currentTweets = new Set(self2.twitter.tweets.keys());
+        const tweetsToRemove = [...currentTweets].filter((tweet) => !snapshotTweets.has(tweet));
+        const tweetsToAdd = [...snapshotTweets].filter((tweet) => !currentTweets.has(tweet));
+        let delay = targetTime * 0.1;
+        for (const tweet of tweetsToRemove) {
+          setTimeout(() => self2.twitter.removeTweet(tweet), delay);
+          delay += tweetDelay;
+        }
+        delay = targetTime * 0.9;
+        for (const tweet of tweetsToAdd) {
+          setTimeout(() => self2.twitter.displayTweet(snapshotTweetsToNodesMap.get(tweet)), delay);
+          delay += tweetDelay * 3;
+        }
+      }
+      updateTweets();
+    }
+    this.createSnapshotButton(el, "PREVIOUS", () => {
+      if (!transitioning && current > 0) {
+        showSnapshot(snapshots[--current]);
+      }
+    });
+    this.createSnapshotButton(el, "NEXT", () => {
+      if (!transitioning && current < snapshots.length - 1) {
+        showSnapshot(snapshots[++current]);
+      }
+    });
+    this.element.appendChild(el);
+  }
+  createSnapshotButton(container, text, cb) {
+    const el = document.createElement("div");
+    el.className = "snapshot-button";
+    el.innerText = text;
+    el.addEventListener("click", cb);
+    container.appendChild(el);
+  }
+};
+
 // src/main.js
 function createLoading(container) {
   const el = document.createElement("div");
@@ -21606,100 +21713,6 @@ function createLoading(container) {
   container.appendChild(el);
   return el;
 }
-function createSnapshotButton(container, text, cb) {
-  const el = document.createElement("div");
-  el.className = "snapshot-button";
-  el.innerText = text;
-  el.addEventListener("click", cb);
-  container.appendChild(el);
-}
-function easeInOutCubic(x) {
-  return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
-}
-function createSnapshotMenu(element, grafer, twitter) {
-  const el = document.createElement("div");
-  el.className = "snapshot-menu";
-  const snapshots = [];
-  let current = -1;
-  let transitioning = false;
-  createSnapshotButton(el, "TAKE SNAPSHOT", () => {
-    const cameraPosition = new Float32Array(grafer.controller.viewport.camera.position);
-    const nodes = [];
-    for (const info of twitter.tweets.values()) {
-      nodes.push(info.tweet.node.id);
-    }
-    current = snapshots.length;
-    snapshots.push({
-      cameraPosition,
-      nodes
-    });
-    console.log(snapshots[snapshots.length - 1]);
-  });
-  const tweetDelay = 200;
-  const animationDuration = 1500;
-  const maxAnimationDuration = 2e4;
-  function showSnapshot(info) {
-    transitioning = true;
-    const startPosition = vec3_exports.clone(grafer.controller.viewport.camera.position);
-    const normal = vec3_exports.subtract(vec3_exports.create(), info.cameraPosition, startPosition);
-    const distance4 = vec3_exports.len(normal);
-    vec3_exports.set(normal, normal[0] / distance4, normal[1] / distance4, normal[2] / distance4);
-    const targetTime = Math.min(maxAnimationDuration, animationDuration * Math.max(1, Math.abs(info.cameraPosition[2] - startPosition[2]) * 1e-3));
-    let currentTime = 0;
-    let time = performance.now();
-    const animate = () => {
-      if (currentTime >= targetTime) {
-        transitioning = false;
-        grafer.controller.viewport.camera.position = info.cameraPosition;
-      } else {
-        const progress = easeInOutCubic(currentTime / targetTime);
-        grafer.controller.viewport.camera.position[0] = startPosition[0] + normal[0] * distance4 * progress;
-        grafer.controller.viewport.camera.position[1] = startPosition[1] + normal[1] * distance4 * progress;
-        grafer.controller.viewport.camera.position[2] = startPosition[2] + normal[2] * distance4 * progress;
-        const now = performance.now();
-        currentTime += now - time;
-        time = now;
-        requestAnimationFrame(() => animate());
-      }
-      grafer.controller.render();
-    };
-    animate();
-    function updateTweets() {
-      const snapshotTweets = new Set();
-      const snapshotTweetsToNodesMap = new Map();
-      for (const nodeID of info.nodes) {
-        const node = grafer.nodes.get(nodeID);
-        snapshotTweets.add(node.label);
-        snapshotTweetsToNodesMap.set(node.label, node);
-      }
-      const currentTweets = new Set(twitter.tweets.keys());
-      const tweetsToRemove = [...currentTweets].filter((tweet) => !snapshotTweets.has(tweet));
-      const tweetsToAdd = [...snapshotTweets].filter((tweet) => !currentTweets.has(tweet));
-      let delay = targetTime * 0.1;
-      for (const tweet of tweetsToRemove) {
-        setTimeout(() => twitter.removeTweet(tweet), delay);
-        delay += tweetDelay;
-      }
-      delay = targetTime * 0.9;
-      for (const tweet of tweetsToAdd) {
-        setTimeout(() => twitter.displayTweet(snapshotTweetsToNodesMap.get(tweet)), delay);
-        delay += tweetDelay * 3;
-      }
-    }
-    updateTweets();
-  }
-  createSnapshotButton(el, "PREVIOUS", () => {
-    if (!transitioning && current > 0) {
-      showSnapshot(snapshots[--current]);
-    }
-  });
-  createSnapshotButton(el, "NEXT", () => {
-    if (!transitioning && current < snapshots.length - 1) {
-      showSnapshot(snapshots[++current]);
-    }
-  });
-  element.appendChild(el);
-}
 async function main() {
   const pathName = window.location.pathname;
   const pathComponents = pathName.split("/").filter((v) => Boolean(v));
@@ -21712,7 +21725,7 @@ async function main() {
       twitter.displayTweet(node);
     });
     loading.parentElement.removeChild(loading);
-    createSnapshotMenu(document.body, grafer, twitter);
+    new SnapshotsView(document.body, grafer, twitter);
   });
 }
 main();
