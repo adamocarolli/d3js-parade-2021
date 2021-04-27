@@ -21597,6 +21597,17 @@ function easeInOutCubic(x) {
   return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
 }
 
+// src/utils/download.js
+function downloadObjectAsJson(exportObj, exportName) {
+  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportObj));
+  const downloadAnchorNode = document.createElement("a");
+  downloadAnchorNode.setAttribute("href", dataStr);
+  downloadAnchorNode.setAttribute("download", exportName + ".json");
+  document.body.appendChild(downloadAnchorNode);
+  downloadAnchorNode.click();
+  downloadAnchorNode.remove();
+}
+
 // src/snapshots/view.js
 var tweetDelay = 200;
 var animationDuration = 1500;
@@ -21640,6 +21651,11 @@ var SnapshotsView = class {
       }
     });
     this.createDescriptionInputField(el);
+    this.createSnapshotButton(el, "DOWNLOAD SNAPSHOTS", () => {
+      const d = new Date();
+      const exportFileName = `snapshots-${d.getMonth()}-${d.getDate()}-${d.getHours()}-${d.getMinutes()}-${d.getSeconds()}`;
+      downloadObjectAsJson(this.snapshots, exportFileName);
+    });
     this.element.appendChild(el);
   }
   showSnapshot(info) {
@@ -21701,7 +21717,7 @@ var SnapshotsView = class {
     el.addEventListener("click", cb);
     container.appendChild(el);
   }
-  createDescriptionInputField(element) {
+  createDescriptionInputField(container) {
     const formEl = document.createElement("form");
     formEl.className = "description-form";
     const textInputEl = document.createElement("textarea");
@@ -21712,7 +21728,7 @@ var SnapshotsView = class {
     textInputEl.addEventListener("change", (event) => {
       this.description = event.target.value;
     });
-    element.appendChild(formEl);
+    container.appendChild(formEl);
   }
 };
 
