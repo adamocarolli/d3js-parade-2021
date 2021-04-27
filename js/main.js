@@ -21607,6 +21607,7 @@ var SnapshotsView = class {
     this.grafer = grafer;
     this.twitter = twitter;
     this.transitioning = false;
+    this.description = "Add Description..";
     this.createSnapshotMenu();
   }
   createSnapshotMenu() {
@@ -21623,7 +21624,8 @@ var SnapshotsView = class {
       current = snapshots.length;
       snapshots.push({
         cameraPosition,
-        nodes
+        nodes,
+        description: this.description
       });
       console.log(snapshots[snapshots.length - 1]);
     });
@@ -21637,6 +21639,7 @@ var SnapshotsView = class {
         this.showSnapshot(snapshots[++current]);
       }
     });
+    this.createDescriptionInputField(el);
     this.element.appendChild(el);
   }
   showSnapshot(info) {
@@ -21689,6 +21692,7 @@ var SnapshotsView = class {
       }
     }
     updateTweets();
+    document.getElementById("story-textarea-id").value = info.description;
   }
   createSnapshotButton(container, text, cb) {
     const el = document.createElement("div");
@@ -21696,6 +21700,19 @@ var SnapshotsView = class {
     el.innerText = text;
     el.addEventListener("click", cb);
     container.appendChild(el);
+  }
+  createDescriptionInputField(element) {
+    const formEl = document.createElement("form");
+    formEl.className = "description-form";
+    const textInputEl = document.createElement("textarea");
+    textInputEl.className = "story-textarea";
+    textInputEl.id = "story-textarea-id";
+    textInputEl.value = this.description;
+    formEl.appendChild(textInputEl);
+    textInputEl.addEventListener("change", (event) => {
+      this.description = event.target.value;
+    });
+    element.appendChild(formEl);
   }
 };
 
