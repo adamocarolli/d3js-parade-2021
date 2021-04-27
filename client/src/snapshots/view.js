@@ -1,5 +1,6 @@
 import {vec3} from 'gl-matrix';
 import {easeInOutCubic} from '../utils/easings';
+import {downloadObjectAsJson} from '../utils/download';
 
 const tweetDelay = 200;
 const animationDuration = 1500;
@@ -51,6 +52,11 @@ export class SnapshotsView {
             }
         });
         this.createDescriptionInputField(el);
+        this.createSnapshotButton(el, 'DOWNLOAD SNAPSHOTS', () => {
+            const d = new Date();
+            const exportFileName = `snapshots-${d.getMonth()}-${d.getDate()}-${d.getHours()}-${d.getMinutes()}-${d.getSeconds()}`;
+            downloadObjectAsJson(this.snapshots, exportFileName);
+        });
 
         this.element.appendChild(el);
     }
@@ -135,7 +141,7 @@ export class SnapshotsView {
         container.appendChild(el);
     }
 
-    createDescriptionInputField(element) {
+    createDescriptionInputField(container) {
         const formEl = document.createElement('form');
         formEl.className = 'description-form';
 
@@ -149,6 +155,6 @@ export class SnapshotsView {
         textInputEl.addEventListener('change', (event) => {
             this.description = event.target.value;
         });
-        element.appendChild(formEl);
+        container.appendChild(formEl);
     }
 }
