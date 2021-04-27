@@ -11,6 +11,7 @@ export class SnapshotsView {
         this.grafer = grafer;
         this.twitter = twitter;
         this.transitioning = false;
+        this.description = 'Add Description..';
 
         this.createSnapshotMenu();
     }
@@ -21,10 +22,6 @@ export class SnapshotsView {
 
         const snapshots = [];
         let current = -1;
-        // const props = {
-        //     title: 'Title',
-        //     description: 'Add description here..',
-        // };
 
         this.createSnapshotButton(el, 'TAKE SNAPSHOT', () => {
             const cameraPosition = new Float32Array(this.grafer.controller.viewport.camera.position);
@@ -37,6 +34,7 @@ export class SnapshotsView {
             snapshots.push({
                 cameraPosition,
                 nodes,
+                description: this.description,
             });
             console.log(snapshots[snapshots.length - 1]);
         });
@@ -52,9 +50,7 @@ export class SnapshotsView {
                 this.showSnapshot(snapshots[++current]);
             }
         });
-        // this.createDescriptionInputField(el, props, (props) => () => {
-        //     console.log(`Hello: ${props.description}`);
-        // });
+        this.createDescriptionInputField(el);
 
         this.element.appendChild(el);
     }
@@ -125,6 +121,9 @@ export class SnapshotsView {
             }
         }
         updateTweets();
+
+        // Update description
+        document.getElementById('story-textarea-id').value = info.description;
     }
 
     createSnapshotButton(container, text, cb) {
@@ -136,25 +135,20 @@ export class SnapshotsView {
         container.appendChild(el);
     }
 
-    // createDescriptionInputField(container, props, cb) {
-    //     const formEl = document.createElement('form');
-    //     formEl.className = 'description-form';
+    createDescriptionInputField(element) {
+        const formEl = document.createElement('form');
+        formEl.className = 'description-form';
 
-    //     const textInputEl = document.createElement('textarea');
-    //     textInputEl.className = 'description-textarea';
-    //     textInputEl.value = props.description;
+        const textInputEl = document.createElement('textarea');
+        textInputEl.className = 'story-textarea';
+        textInputEl.id = 'story-textarea-id';
+        textInputEl.value = this.description;
 
-    //     const inputButtonEl = document.createElement('input');
-    //     inputButtonEl.type = 'button';
-    //     inputButtonEl.value = 'Submit';
+        formEl.appendChild(textInputEl);
 
-    //     formEl.appendChild(textInputEl);
-    //     formEl.appendChild(inputButtonEl);
-
-    //     inputButtonEl.addEventListener('click', () => {
-    //         props.description = textInputEl.value;
-    //         return cb(props)();
-    //     });
-    //     container.appendChild(formEl);
-    // }
+        textInputEl.addEventListener('change', (event) => {
+            this.description = event.target.value;
+        });
+        element.appendChild(formEl);
+    }
 }
