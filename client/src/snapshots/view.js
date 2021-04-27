@@ -6,10 +6,11 @@ const animationDuration = 1500;
 const maxAnimationDuration = 20000;
 
 export class SnapshotsView {
-    constructor(container, grafer, twitter) {
+    constructor(container, grafer, twitter, snapshots) {
         this.element = container;
         this.grafer = grafer;
         this.twitter = twitter;
+        this.snapshots = snapshots || [];
         this.transitioning = false;
         this.description = 'Add Description..';
 
@@ -20,7 +21,6 @@ export class SnapshotsView {
         const el = document.createElement('div');
         el.className = 'snapshot-menu';
 
-        const snapshots = [];
         let current = -1;
 
         this.createSnapshotButton(el, 'TAKE SNAPSHOT', () => {
@@ -30,24 +30,24 @@ export class SnapshotsView {
                 nodes.push(info.tweet.node.id);
             }
 
-            current = snapshots.length;
-            snapshots.push({
+            current = this.snapshots.length;
+            this.snapshots.push({
                 cameraPosition,
                 nodes,
                 description: this.description,
             });
-            console.log(snapshots[snapshots.length - 1]);
+            console.log(this.snapshots[this.snapshots.length - 1]);
         });
 
         this.createSnapshotButton(el, 'PREVIOUS', () => {
             if (!this.transitioning && current > 0) {
-                this.showSnapshot(snapshots[--current]);
+                this.showSnapshot(this.snapshots[--current]);
             }
         });
 
         this.createSnapshotButton(el, 'NEXT', () => {
-            if (!this.transitioning && current < snapshots.length - 1) {
-                this.showSnapshot(snapshots[++current]);
+            if (!this.transitioning && current < this.snapshots.length - 1) {
+                this.showSnapshot(this.snapshots[++current]);
             }
         });
         this.createDescriptionInputField(el);

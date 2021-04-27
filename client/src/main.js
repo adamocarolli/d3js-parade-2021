@@ -35,8 +35,11 @@ async function main() {
         });
 
         loading.parentElement.removeChild(loading);
+
+        // TODO: Load snapshots from file for default snapshot
+        const snapshots = [];
         // eslint-disable-next-line no-new
-        new SnapshotsView(document.body, grafer, twitter);
+        new SnapshotsView(document.body, grafer, twitter, snapshots);
     });
 }
 
