@@ -64,17 +64,9 @@ export class SnapshotsView {
         inputEl.className = 'input-file';
         inputEl.type = 'file';
 
-        inputEl.addEventListener('change', () => {
-            const snapshotFile = inputEl.files[0];
-            const reader = new FileReader();
-
-            reader.addEventListener('load', () => {
-                const snapshots = JSON.parse(reader.result);
-                this.snapshots = snapshots;
-            });
-            reader.readAsText(snapshotFile);
+        this.createUploadSnapshotsFileButton(el, (snapshots) => {
+            this.snapshots = snapshots;
         });
-        el.appendChild(inputEl);
 
         this.element.appendChild(el);
     }
@@ -150,6 +142,14 @@ export class SnapshotsView {
         document.getElementById('story-textarea-id').value = info.description;
     }
 
+    // createRow(container) {
+    //     const el = document.createElement('div');
+    //     el.className = 'snapshot-row';
+
+    //     container.appendChild(el);
+    //     return el;
+    // }
+
     createSnapshotButton(container, text, cb) {
         const el = document.createElement('div');
         el.className = 'snapshot-button';
@@ -157,6 +157,26 @@ export class SnapshotsView {
 
         el.addEventListener('click', cb);
         container.appendChild(el);
+    }
+
+    createUploadSnapshotsFileButton(container, cb) {
+        const inputEl = document.createElement('input');
+        inputEl.id = 'input-file-id';
+        inputEl.className = 'input-file';
+        inputEl.type = 'file';
+
+        inputEl.addEventListener('change', () => {
+            const snapshotFile = inputEl.files[0];
+            const reader = new FileReader();
+
+            // Load snapshots file and run callback
+            reader.addEventListener('load', () => {
+                const snapshots = JSON.parse(reader.result);
+                cb(snapshots);
+            });
+            reader.readAsText(snapshotFile);
+        });
+        container.appendChild(inputEl);
     }
 
     createDescriptionInputField(container) {
