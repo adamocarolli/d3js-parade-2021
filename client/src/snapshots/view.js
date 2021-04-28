@@ -14,6 +14,7 @@ export class SnapshotsView {
         this.snapshots = snapshots || [];
         this.transitioning = false;
         this.description = 'Add Description..';
+        this.current = -1;
 
         this.createSnapshotMenu();
     }
@@ -22,16 +23,16 @@ export class SnapshotsView {
         const el = document.createElement('div');
         el.className = 'snapshot-menu';
 
-        let current = -1;
+        const row1 = this.createRow(el);
 
-        this.createSnapshotButton(el, 'TAKE SNAPSHOT', () => {
+        this.createSnapshotButton(row1, 'TAKE SNAPSHOT', () => {
             const cameraPosition = new Float32Array(this.grafer.controller.viewport.camera.position);
             const nodes = [];
             for (const info of this.twitter.tweets.values()) {
                 nodes.push(info.tweet.node.id);
             }
 
-            current = this.snapshots.length;
+            this.current = this.snapshots.length;
             this.snapshots.push({
                 cameraPosition,
                 nodes,
@@ -40,29 +41,43 @@ export class SnapshotsView {
             console.log(this.snapshots[this.snapshots.length - 1]);
         });
 
-        this.createSnapshotButton(el, 'PREVIOUS', () => {
-            if (!this.transitioning && current > 0) {
-                this.showSnapshot(this.snapshots[--current]);
+        const row2 = this.createRow(el);
+
+        this.createSnapshotButton(row2, 'PREVIOUS', () => {
+            if (!this.transitioning && this.current > 0) {
+                this.showSnapshot(this.snapshots[--this.current]);
             }
         });
 
-        this.createSnapshotButton(el, 'NEXT', () => {
-            if (!this.transitioning && current < this.snapshots.length - 1) {
-                this.showSnapshot(this.snapshots[++current]);
+        this.createSnapshotButton(row2, 'NEXT', () => {
+            if (!this.transitioning && this.current < this.snapshots.length - 1) {
+                this.showSnapshot(this.snapshots[++this.current]);
             }
         });
-        this.createDescriptionInputField(el);
-        this.createSnapshotButton(el, 'DOWNLOAD SNAPSHOTS', () => {
+
+        const row3 = this.createRow(el);
+        this.createDescriptionInputField(row3);
+
+        const row4 = this.createRow(el);
+        this.createSnapshotButton(row4, 'EDIT', () => {
+            // Edit current snapshot
+            const cameraPosition = new Float32Array(this.grafer.controller.viewport.camera.position);
+            const nodes = [];
+            for (const info of this.twitter.tweets.values()) {
+                nodes.push(info.tweet.node.id);
+            }
+
+            this.snapshots[this.current] = {
+                cameraPosition,
+                nodes,
+                description: this.description,
+            };
+        });
+        this.createSnapshotButton(row4, 'DOWNLOAD', () => {
             const d = new Date();
             const exportFileName = `snapshots-${d.getMonth()}-${d.getDate()}-${d.getHours()}-${d.getMinutes()}-${d.getSeconds()}`;
             downloadObjectAsJson(this.snapshots, exportFileName);
         });
-
-        // Upload Snapshot File Button
-        const inputEl = document.createElement('input');
-        inputEl.id = 'input-file-id';
-        inputEl.className = 'input-file';
-        inputEl.type = 'file';
 
         this.createUploadSnapshotsFileButton(el, (snapshots) => {
             this.snapshots = snapshots;
@@ -142,13 +157,13 @@ export class SnapshotsView {
         document.getElementById('story-textarea-id').value = info.description;
     }
 
-    // createRow(container) {
-    //     const el = document.createElement('div');
-    //     el.className = 'snapshot-row';
+    createRow(container) {
+        const el = document.createElement('div');
+        el.className = 'snapshot-row';
 
-    //     container.appendChild(el);
-    //     return el;
-    // }
+        container.appendChild(el);
+        return el;
+    }
 
     createSnapshotButton(container, text, cb) {
         const el = document.createElement('div');
