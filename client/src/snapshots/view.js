@@ -58,6 +58,24 @@ export class SnapshotsView {
             downloadObjectAsJson(this.snapshots, exportFileName);
         });
 
+        // Upload Snapshot File Button
+        const inputEl = document.createElement('input');
+        inputEl.id = 'input-file-id';
+        inputEl.className = 'input-file';
+        inputEl.type = 'file';
+
+        inputEl.addEventListener('change', () => {
+            const snapshotFile = inputEl.files[0];
+            const reader = new FileReader();
+
+            reader.addEventListener('load', () => {
+                const snapshots = JSON.parse(reader.result);
+                this.snapshots = snapshots;
+            });
+            reader.readAsText(snapshotFile);
+        });
+        el.appendChild(inputEl);
+
         this.element.appendChild(el);
     }
 
