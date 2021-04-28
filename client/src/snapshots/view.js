@@ -1,10 +1,13 @@
 import {vec3} from 'gl-matrix';
 import {easeInOutCubic} from '../utils/easings';
 import {downloadObjectAsJson} from '../utils/download';
+// eslint-disable-next-line import/no-unresolved
+import showdown from 'https://cdn.skypack.dev/showdown';
 
 const tweetDelay = 200;
 const animationDuration = 1500;
 const maxAnimationDuration = 20000;
+const markdownConverter = new showdown.Converter();
 
 export class SnapshotsView {
     constructor(container, grafer, twitter, snapshots) {
@@ -13,7 +16,8 @@ export class SnapshotsView {
         this.twitter = twitter;
         this.snapshots = snapshots || [];
         this.transitioning = false;
-        this.description = 'Add Description..';
+        this.descriptionMarkDown = `# Title\nA **description**..`;
+        this.descriptionHTML = markdownConverter.makeHtml(this.descriptionMarkDown);
         this.current = -1;
 
         this.createSnapshotMenu();
@@ -36,7 +40,7 @@ export class SnapshotsView {
             this.snapshots.push({
                 cameraPosition,
                 nodes,
-                description: this.description,
+                description: this.descriptionMarkDown,
             });
             console.log(this.snapshots[this.snapshots.length - 1]);
         });
@@ -70,7 +74,7 @@ export class SnapshotsView {
             this.snapshots[this.current] = {
                 cameraPosition,
                 nodes,
-                description: this.description,
+                description: this.descriptionMarkDown,
             };
         });
         this.createSnapshotButton(row4, 'DOWNLOAD', () => {
@@ -82,6 +86,13 @@ export class SnapshotsView {
         this.createUploadSnapshotsFileButton(el, (snapshots) => {
             this.snapshots = snapshots;
         });
+
+        // Add container that displays markdown preview
+        const markdownContainerEl = document.createElement('div');
+        markdownContainerEl.className = 'snapshots-markdown-container';
+        markdownContainerEl.id = 'snapshots-markdown-container-id';
+        markdownContainerEl.innerHTML = this.descriptionHTML;
+        el.appendChild(markdownContainerEl);
 
         this.element.appendChild(el);
     }
@@ -201,12 +212,16 @@ export class SnapshotsView {
         const textInputEl = document.createElement('textarea');
         textInputEl.className = 'story-textarea';
         textInputEl.id = 'story-textarea-id';
-        textInputEl.value = this.description;
+        textInputEl.value = this.descriptionMarkDown;
 
         formEl.appendChild(textInputEl);
 
         textInputEl.addEventListener('change', (event) => {
-            this.description = event.target.value;
+            this.descriptionMarkDown = event.target.value;
+            this.descriptionHTML = markdownConverter.makeHtml(this.descriptionMarkDown);
+            // TODO: Create a watcher pattern here. When description html updates
+            //       this element's inner html should update.
+            document.getElementById('snapshots-markdown-container-id').innerHTML = this.descriptionHTML;
         });
         container.appendChild(formEl);
     }

@@ -64,6 +64,43 @@ export class TwitterView {
             }
         };
 
+        // Daniel hack
+        const pixelRatio = window.devicePixelRatio;
+        const _old_render = this.grafer.controller.viewport._render.bind(this.grafer.controller.viewport);
+        this.grafer.controller.viewport._render = () => {
+            _old_render();
+            const inView = [];
+            if (this.grafer.controller.viewport.renderMode === 2) {
+                console.log('HELLO DEBOUNCED RENDER', this.grafer.nodes.size);
+                for (const node of this.grafer.nodes.values()) {
+                    const point = this.grafer.getWorldPointPosition(node.point);
+                    const screenPoint = this.grafer.worldToPixel(point);
+                    // console.log(point, screenPoint, this.canvas.width, this.canvas.height);
+                    if (screenPoint[0] >= 0 && screenPoint[0] <= this.canvas.width) {
+                        if (screenPoint[1] >= 0 && screenPoint[1] <= this.canvas.height) {
+                            inView.push(node);
+                        }
+                    }
+                    // break;
+                }
+                if (inView.length > 0) {
+                    console.log('D3 hacking begins', inView.length);
+                    const userMap = new Map();
+                    for (let i = 0; i < inView.length; i++) {
+                        const tweet = inView[i].tweet;
+                        if (!userMap.has(tweet.user)) {
+                            userMap.set(tweet.user, 1);
+                        } else {
+                            userMap.set(tweet.user, userMap.get(tweet.user) + 1);
+                        }
+                    }
+                    const topUsers = [...userMap.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10);
+                    console.log('top', topUsers);
+                }
+            }
+        };
+
+
         // initialize tweet event functions
         this.tweetUpdated = () => {
             if (animationFrame === null) {
@@ -150,7 +187,29 @@ export class TwitterView {
         const header = this.makeEmptyElement('twitter-header');
 
         const title = this.makeEmptyElement('twitter-header-title');
-        title.innerText = 'D3 Tweets!';
+        title.innerHTML = `
+            <svg width="96" height="91" style="position:relative;top:22px;margin-right:5px;">
+                <clipPath id="clip">
+                <path d="M0,0h7.75a45.5,45.5 0 1 1 0,91h-7.75v-20h7.75a25.5,25.5 0 1 0 0,-51h-7.75zm36.2510,0h32a27.75,27.75 0 0 1 21.331,45.5a27.75,27.75 0 0 1 -21.331,45.5h-32a53.6895,53.6895 0 0 0 18.7464,-20h13.2526a7.75,7.75 0 1 0 0,-15.5h-7.75a53.6895,53.6895 0 0 0 0,-20h7.75a7.75,7.75 0 1 0 0,-15.5h-13.2526a53.6895,53.6895 0 0 0 -18.7464,-20z"></path>
+                </clipPath>
+                <linearGradient id="gradient-1" gradientUnits="userSpaceOnUse" x1="7" y1="64" x2="50" y2="107">
+                <stop offset="0" stop-color="#f9a03c"></stop>
+                <stop offset="1" stop-color="#f7974e"></stop>
+                </linearGradient>
+                <linearGradient id="gradient-2" gradientUnits="userSpaceOnUse" x1="2" y1="-2" x2="87" y2="84">
+                <stop offset="0" stop-color="#f26d58"></stop>
+                <stop offset="1" stop-color="#f9a03c"></stop>
+                </linearGradient>
+                <linearGradient id="gradient-3" gradientUnits="userSpaceOnUse" x1="45" y1="-10" x2="108" y2="53">
+                <stop offset="0" stop-color="#b84e51"></stop>
+                <stop offset="1" stop-color="#f68e48"></stop>
+                </linearGradient>
+                <g clip-path="url(#clip)">
+                <path d="M-100,-102m-27,0v300h300z" fill="url(#gradient-1)"></path>
+                <path d="M-100,-102m27,0h300v300z" fill="url(#gradient-3)"></path>
+                <path d="M-100,-102l300,300" fill="none" stroke="url(#gradient-2)" stroke-width="40"></path>
+                </g>
+            </svg><span>Tweets</span>`;
         header.appendChild(title);
 
         const menu = this.makeEmptyElement('twitter-header-menu');

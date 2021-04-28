@@ -93,25 +93,58 @@ export const computeLayout = (yearClusters, nodeRadius, paddingMult = 0.1) => {
 
     // Keep a reference to all monthly clusters
     const monthClusters = [];
+    const yearLabels = [];
 
     // 1. Compute the max radius among all months
-    for (const yearCluster of yearClusters) {
+    for (let i = 0, n = yearClusters.length; i < n; ++i) {
+        const yearCluster = yearClusters[i];
+
         let monthClustersOfCurrYear = yearCluster.children;
         // Sort month clusters in ascending order
         monthClustersOfCurrYear = monthClustersOfCurrYear.sort((m1, m2) => m1._value - m2._value);
+
+        const label = {
+            id: `l-${yearCluster._value}`,
+            nodes: new Map(),
+            children: [],
+            parent: null,
+            score: -1,
+            label: `[DARIO]`,
+        };
+
+        monthClusters.push(label);
+        yearLabels.push(label);
+
         for (const monthCluster of monthClustersOfCurrYear) {
             // Circle pack each month cluster
             monthClusters.push(monthCluster);
+            // break;
         }
     }
 
 
     const packedMonthClusters = [];
     let radiusSum = 0;
+    let maxLabelRadius = 0;
     for (let i = 0, n = monthClusters.length; i < n; ++i) {
-        const packedMonthCluster = buildHierarchy(monthClusters[i], nodeRadius * i, paddingMult);
-        radiusSum += packedMonthCluster.r;
-        packedMonthClusters.push(packedMonthCluster);
+        if (yearLabels.indexOf(monthClusters[i]) !== -1) {
+            maxLabelRadius = Math.max(
+                maxLabelRadius * 1.25,
+                packedMonthClusters.length ? packedMonthClusters[packedMonthClusters.length - 1].r : nodeRadius * i * 2
+            );
+            packedMonthClusters.push({
+                id: gID++,
+                x: 0,
+                y: 0,
+                r: maxLabelRadius,
+                name: monthClusters[i].label,
+                children: [],
+            });
+        } else {
+            const packedMonthCluster = buildHierarchy(monthClusters[i], nodeRadius * i, paddingMult);
+            radiusSum += packedMonthCluster.r;
+            packedMonthClusters.push(packedMonthCluster);
+        }
     }
 
     let angle = 0;
