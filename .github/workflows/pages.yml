@@ -30,10 +30,6 @@ jobs:
               working-directory: ./client
               run: yarn clean
 
-            - name: lint
-              working-directory: ./client
-              run: yarn lint
-
             - name: build
               working-directory: ./client
               run: yarn pages

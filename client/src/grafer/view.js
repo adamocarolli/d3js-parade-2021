@@ -45,6 +45,7 @@ const kDataPackages = {
         clusterEdges: null,
         nodes: 'layouts/adam_d3js/inferred/nodes.jsonl',
         nodeEdges: 'layouts/adam_d3js/inferred/edges.jsonl',
+        labels: 'layouts/adam_d3js/inferred/labels.jsonl',
     },
     adam_inferred_flat: {
         points: 'layouts/adam_d3js/inferred_flat/points.jsonl',
@@ -52,6 +53,7 @@ const kDataPackages = {
         clusterEdges: null,
         nodes: 'layouts/adam_d3js/inferred_flat/nodes.jsonl',
         nodeEdges: 'layouts/adam_d3js/inferred_flat/edges.jsonl',
+        labels: null,
     },
 };
 
@@ -231,8 +233,36 @@ export class GraferView extends EventEmitter {
             });
         }
 
+        const labelsLayer = {
+            name: 'Labels',
+            labels: {
+                type: 'PointLabel',
+                // type: 'RingLabel',
+                data: [],
+                mappings: {
+                    fontSize: () => 32,
+                    padding: () => 6,
+                },
+                options: {
+                    visibilityThreshold: 25,
+                    renderBackground: false,
+                    // fade: 0.65,
+                    // desaturate: 1.0,
+                },
+            },
+        };
+
+        if (paths.labels) {
+            const nodes = labelsLayer.labels;
+            await parseJSONL(paths.labels, json => {
+                nodes.data.push(Object.assign({}, json, {
+                    color: this.colors.map.get('nodeEdges'),
+                }));
+            });
+        }
+
         const colors = this.colors.values;
 
-        return { points, colors, layers: [ nodeLayer, clusterLayer ] };
+        return { points, colors, layers: [ nodeLayer, clusterLayer, labelsLayer ] };
     }
 }

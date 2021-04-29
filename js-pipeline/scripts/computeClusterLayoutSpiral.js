@@ -109,7 +109,7 @@ export const computeLayout = (yearClusters, nodeRadius, paddingMult = 0.1) => {
             children: [],
             parent: null,
             score: -1,
-            label: `[DARIO]`,
+            label: `${yearCluster._value}`,
         };
 
         monthClusters.push(label);
@@ -124,25 +124,26 @@ export const computeLayout = (yearClusters, nodeRadius, paddingMult = 0.1) => {
 
 
     const packedMonthClusters = [];
+    const packedYearLabels = [];
     let radiusSum = 0;
-    let maxLabelRadius = 0;
+    let radiusCount = 0;
     for (let i = 0, n = monthClusters.length; i < n; ++i) {
-        if (yearLabels.indexOf(monthClusters[i]) !== -1) {
-            maxLabelRadius = Math.max(
-                maxLabelRadius * 1.25,
-                packedMonthClusters.length ? packedMonthClusters[packedMonthClusters.length - 1].r : nodeRadius * i * 2
-            );
-            packedMonthClusters.push({
+        const yearLabelIndex = yearLabels.indexOf(monthClusters[i]);
+        if (yearLabelIndex !== -1) {
+            const cluster = {
                 id: gID++,
                 x: 0,
                 y: 0,
-                r: maxLabelRadius,
-                name: monthClusters[i].label,
+                r: Math.max(nodeRadius * (i + 5), radiusSum / Math.max(1, radiusCount)),
+                name: yearLabels[yearLabelIndex].label,
                 children: [],
-            });
+            };
+            packedMonthClusters.push(cluster);
+            packedYearLabels.push(cluster);
         } else {
-            const packedMonthCluster = buildHierarchy(monthClusters[i], nodeRadius * i, paddingMult);
+            const packedMonthCluster = buildHierarchy(monthClusters[i], nodeRadius * Math.max(1, i), paddingMult);
             radiusSum += packedMonthCluster.r;
+            ++radiusCount;
             packedMonthClusters.push(packedMonthCluster);
         }
     }
@@ -181,5 +182,8 @@ export const computeLayout = (yearClusters, nodeRadius, paddingMult = 0.1) => {
         currRevolutionClusters.push(packedMonthCluster);
     }
 
-    return packedMonthClusters;
+    return {
+        clusters: packedMonthClusters.filter(ugh => packedYearLabels.indexOf(ugh) === -1),
+        yearLabels: packedYearLabels,
+    };
 }

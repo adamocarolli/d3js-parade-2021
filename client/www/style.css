@@ -1,3 +1,7 @@
+/* FONTS */
+/* Source Sans Pro */
+@import url('https://fonts.googleapis.com/css2?family=Source+Sans+Pro&display=swap');
+
 :root {
     /* grafer colours */
     --grafer-background: #242933;
@@ -42,8 +46,11 @@ a {
     position: absolute;
     left: 16px;
     top: 16px;
-    user-select: none;
-    background-color: rgba(0, 0, 0, 0.2);
+    padding-left: 20px;
+    padding-right: 20px;
+    padding-bottom: 10px;
+    min-width: 300px;
+    background-color: #FFFFFF;
 }
 
 .snapshot-row {
@@ -63,7 +70,8 @@ a {
 }
 
 .snapshots-markdown-container {
-    color: #1DA1F2;
+    color: #000000;
+    font-family: 'Source Sans Pro', sans-serif;
 }
 
 .data-loading {

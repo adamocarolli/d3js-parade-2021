@@ -32,8 +32,9 @@ export class TwitterView {
         this.linkColor = style.getPropertyValue('--tweet-to-node').trim();
         this.tweetTheme = style.getPropertyValue('--tweet-theme').trim();
 
+        // Inject aggregation panel
         this.aggregationPane = this.makeEmptyElement('aggregation-pane');
-        this.aggregationPane.style.width = '800px';
+        this.aggregationPane.style.width = '400px';
         this.aggregationPane.style.height = '150px';
         this.aggregationPane.style.background = 'transparent';
         this.aggregationPane.style.position = 'absolute';
@@ -53,8 +54,23 @@ export class TwitterView {
             .style('width', '100%')
             .style('height', '100%');
         }
+
+        // Figure out extent
+        const extent = [0, Math.max(...topUsers.map(d => d[1]))];
+        const xscale = d3.scaleLinear().range([0, 300]).domain(extent);
+
         svg.selectAll('*').remove();
+
+        svg.append('text')
+          .attr('x', 5)
+          .attr('y', 20)
+          .style('fill', '#eef2ee')
+          .style('font-size', '14px')
+          .text('Top user accounts');
+
+
         const userRow = svg.append('g')
+          .attr('transform', 'translate(0, 20)')
           .selectAll('.user-row')
           .data(topUsers)
           .enter()
@@ -64,7 +80,9 @@ export class TwitterView {
         userRow.append('rect')
           .attr('x', 2)
           .attr('y', (d, i) => (i) * 22 + 11)
-          .attr('width', d => d[1] * 0.2)
+          .attr('rx', 3)
+          .attr('ry', 3)
+          .attr('width', d => xscale(d[1]))
           .attr('height', 16)
           .attr('fill-opacity', 0.9)
           .attr('stroke', null)
@@ -75,7 +93,7 @@ export class TwitterView {
           .attr('y', (d, i) => (i + 1) * 22)
           .style('font-size', '11px')
           .style('fill', '#eef2ee')
-          .text(d => d[0]);
+          .text(d => d[0] + ' - ' + d[1]);
     }
 
     initializeEvents() {

@@ -16,9 +16,10 @@ export class SnapshotsView {
         this.twitter = twitter;
         this.snapshots = snapshots || [];
         this.transitioning = false;
-        this.descriptionMarkDown = `# Title\nA **description**..`;
+        this.descriptionMarkDown = `# Goodnight Dario\nA **description**..`;
         this.descriptionHTML = markdownConverter.makeHtml(this.descriptionMarkDown);
         this.current = -1;
+        this.isEditMode = false;
 
         this.createSnapshotMenu();
     }
@@ -27,72 +28,36 @@ export class SnapshotsView {
         const el = document.createElement('div');
         el.className = 'snapshot-menu';
 
-        const row1 = this.createRow(el);
-
-        this.createSnapshotButton(row1, 'TAKE SNAPSHOT', () => {
-            const cameraPosition = new Float32Array(this.grafer.controller.viewport.camera.position);
-            const nodes = [];
-            for (const info of this.twitter.tweets.values()) {
-                nodes.push(info.tweet.node.id);
-            }
-
-            this.current = this.snapshots.length;
-            this.snapshots.push({
-                cameraPosition,
-                nodes,
-                description: this.descriptionMarkDown,
-            });
-            console.log(this.snapshots[this.snapshots.length - 1]);
-        });
-
-        const row2 = this.createRow(el);
-
-        this.createSnapshotButton(row2, 'PREVIOUS', () => {
-            if (!this.transitioning && this.current > 0) {
-                this.showSnapshot(this.snapshots[--this.current]);
-            }
-        });
-
-        this.createSnapshotButton(row2, 'NEXT', () => {
-            if (!this.transitioning && this.current < this.snapshots.length - 1) {
-                this.showSnapshot(this.snapshots[++this.current]);
-            }
-        });
-
-        const row3 = this.createRow(el);
-        this.createDescriptionInputField(row3);
-
-        const row4 = this.createRow(el);
-        this.createSnapshotButton(row4, 'EDIT', () => {
-            // Edit current snapshot
-            const cameraPosition = new Float32Array(this.grafer.controller.viewport.camera.position);
-            const nodes = [];
-            for (const info of this.twitter.tweets.values()) {
-                nodes.push(info.tweet.node.id);
-            }
-
-            this.snapshots[this.current] = {
-                cameraPosition,
-                nodes,
-                description: this.descriptionMarkDown,
-            };
-        });
-        this.createSnapshotButton(row4, 'DOWNLOAD', () => {
-            const d = new Date();
-            const exportFileName = `snapshots-${d.getMonth()}-${d.getDate()}-${d.getHours()}-${d.getMinutes()}-${d.getSeconds()}`;
-            downloadObjectAsJson(this.snapshots, exportFileName);
-        });
-
-        this.createUploadSnapshotsFileButton(el, (snapshots) => {
-            this.snapshots = snapshots;
-        });
-
         // Add container that displays markdown preview
         const markdownContainerEl = document.createElement('div');
         markdownContainerEl.className = 'snapshots-markdown-container';
         markdownContainerEl.id = 'snapshots-markdown-container-id';
         markdownContainerEl.innerHTML = this.descriptionHTML;
         el.appendChild(markdownContainerEl);
+
+        const row2 = this.createRow(el);
+        this.createSnapshotButton(row2, 'PREVIOUS', () => {
+            if (!this.transitioning && this.current > 0) {
+                this.showSnapshot(this.snapshots[--this.current]);
+            }
+        });
+        this.createSnapshotButton(row2, 'NEXT', () => {
+            if (!this.transitioning && this.current < this.snapshots.length - 1) {
+                this.showSnapshot(this.snapshots[++this.current]);
+            }
+        });
+
+        const editModeRow = this.createRow(el);
+        this.createSnapshotButton(editModeRow, 'Toggle Edit Mode', () => {
+            if (this.isEditMode) {
+                document.getElementById('snapshots-editor-panel-container-id').style.display = 'none';
+                this.isEditMode = false;
+            } else {
+                document.getElementById('snapshots-editor-panel-container-id').style.display = 'block';
+                this.isEditMode = true;
+            }
+        });
+        this.createEditorPanel(el);
 
         this.element.appendChild(el);
     }
@@ -225,5 +190,60 @@ export class SnapshotsView {
             document.getElementById('snapshots-markdown-container-id').innerHTML = this.descriptionHTML;
         });
         container.appendChild(formEl);
+    }
+
+    createEditorPanel(container) {
+        const editorPanelContainer = document.createElement('div');
+        editorPanelContainer.className = 'snapshots-editor-panel-container';
+        editorPanelContainer.id = 'snapshots-editor-panel-container-id';
+        if (!this.isEditMode){
+            editorPanelContainer.style.display = 'none';
+        }
+
+        const row1 = this.createRow(editorPanelContainer);
+        this.createSnapshotButton(row1, 'TAKE SNAPSHOT', () => {
+            const cameraPosition = new Float32Array(this.grafer.controller.viewport.camera.position);
+            const nodes = [];
+            for (const info of this.twitter.tweets.values()) {
+                nodes.push(info.tweet.node.id);
+            }
+
+            this.current = this.snapshots.length;
+            this.snapshots.push({
+                cameraPosition,
+                nodes,
+                description: this.descriptionMarkDown,
+            });
+        });
+
+        const row3 = this.createRow(editorPanelContainer);
+        this.createDescriptionInputField(row3);
+
+        const row4 = this.createRow(editorPanelContainer);
+        this.createSnapshotButton(row4, 'EDIT', () => {
+            // Edit current snapshot
+            const cameraPosition = new Float32Array(this.grafer.controller.viewport.camera.position);
+            const nodes = [];
+            for (const info of this.twitter.tweets.values()) {
+                nodes.push(info.tweet.node.id);
+            }
+
+            this.snapshots[this.current] = {
+                cameraPosition,
+                nodes,
+                description: this.descriptionMarkDown,
+            };
+        });
+        this.createSnapshotButton(row4, 'DOWNLOAD', () => {
+            const d = new Date();
+            const exportFileName = `snapshots-${d.getMonth()}-${d.getDate()}-${d.getHours()}-${d.getMinutes()}-${d.getSeconds()}`;
+            downloadObjectAsJson(this.snapshots, exportFileName);
+        });
+
+        this.createUploadSnapshotsFileButton(editorPanelContainer, (snapshots) => {
+            this.snapshots = snapshots;
+        });
+
+        container.appendChild(editorPanelContainer);
     }
 }

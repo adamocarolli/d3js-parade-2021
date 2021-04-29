@@ -132,6 +132,25 @@ function addEdgesToOutput(nodes, edges, out) {
     }
 }
 
+function addLabelsToOutput(labels, points, out) {
+    for (const label of labels) {
+        const pointID = points.length;
+        points.push({
+            id: pointID,
+            x: label.x,
+            y: label.y,
+            z: 0,
+            radius: label.r / kPaddingMult,
+        });
+
+        out.push({
+            id: `l-${out.length}`,
+            point: pointID,
+            label: label.name,
+        });
+    }
+}
+
 function makeNode(id, tweets, terms, embeddings) {
     const tweet = tweets[id];
     return {
@@ -210,11 +229,12 @@ function computeLayout(clusters) {
     return computeClusterLayout(data, 0.1, kPaddingMult);
 }
 
-function unfoldLayout(clusters, nodes, edges) {
+function unfoldLayout(clusters, labels, nodes, edges) {
     const outPoints = [];
     const outNodes = [];
     const outClusters = [];
     const outEdges = [];
+    const outLabels = [];
 
     const fauxRoot = {
         children: clusters,
@@ -223,12 +243,14 @@ function unfoldLayout(clusters, nodes, edges) {
     }
     addChildrenToOutput(fauxRoot, outPoints, outNodes, outClusters);
     addEdgesToOutput(nodes, edges, outEdges);
+    addLabelsToOutput(labels, outPoints, outLabels);
 
     return {
         outPoints,
         outNodes,
         outClusters,
         outEdges,
+        outLabels,
     }
 }
 
@@ -416,10 +438,10 @@ async function main(inputFile, outputPath) {
     // console.log(clusters);
 
     console.log('Computing layout...');
-    const clusters = computeLayout(baseClusters);
+    const {clusters, yearLabels} = computeLayout(baseClusters);
 
     console.log('Unfolding hierarchy...');
-    const { outPoints, outNodes, outClusters, outEdges } = unfoldLayout(clusters, allNodes, validEdges);
+    const { outPoints, outNodes, outClusters, outEdges, outLabels } = unfoldLayout(clusters, yearLabels, allNodes, validEdges);
 
     console.log('Writing points JSONL file...');
     await Deno.writeTextFile(`${outputPath}/points.jsonl`, makeJSONL(outPoints));
@@ -432,6 +454,9 @@ async function main(inputFile, outputPath) {
 
     console.log('Writing clusters JSONL file...');
     await Deno.writeTextFile(`${outputPath}/clusters.jsonl`, makeJSONL(outClusters));
+
+    console.log('Writing labels JSONL file...');
+    await Deno.writeTextFile(`${outputPath}/labels.jsonl`, makeJSONL(outLabels));
 
 }
 
