@@ -21143,14 +21143,16 @@ var kDataPackages = {
     clusters: "layouts/adam_d3js/inferred/clusters.jsonl",
     clusterEdges: null,
     nodes: "layouts/adam_d3js/inferred/nodes.jsonl",
-    nodeEdges: "layouts/adam_d3js/inferred/edges.jsonl"
+    nodeEdges: "layouts/adam_d3js/inferred/edges.jsonl",
+    labels: "layouts/adam_d3js/inferred/labels.jsonl"
   },
   adam_inferred_flat: {
     points: "layouts/adam_d3js/inferred_flat/points.jsonl",
     clusters: "layouts/adam_d3js/inferred_flat/clusters.jsonl",
     clusterEdges: null,
     nodes: "layouts/adam_d3js/inferred_flat/nodes.jsonl",
-    nodeEdges: "layouts/adam_d3js/inferred_flat/edges.jsonl"
+    nodeEdges: "layouts/adam_d3js/inferred_flat/edges.jsonl",
+    labels: null
   }
 };
 var GraferView2 = class extends EventEmitter {
@@ -21301,13 +21303,37 @@ var GraferView2 = class extends EventEmitter {
         }));
       });
     }
+    const labelsLayer = {
+      name: "Labels",
+      labels: {
+        type: "PointLabel",
+        data: [],
+        mappings: {
+          fontSize: () => 32,
+          padding: () => 6
+        },
+        options: {
+          visibilityThreshold: 25,
+          renderBackground: false
+        }
+      }
+    };
+    if (paths.labels) {
+      const nodes = labelsLayer.labels;
+      await parseJSONL(paths.labels, (json) => {
+        nodes.data.push(Object.assign({}, json, {
+          color: this.colors.map.get("nodeEdges")
+        }));
+      });
+    }
     const colors = this.colors.values;
-    return {points, colors, layers: [nodeLayer, clusterLayer]};
+    return {points, colors, layers: [nodeLayer, clusterLayer, labelsLayer]};
   }
 };
 
 // src/twitter/view.js
 import {
+  scaleLinear,
   select
 } from "https://cdn.skypack.dev/d3";
 
@@ -21486,7 +21512,7 @@ var TwitterView = class {
     this.linkColor = style.getPropertyValue("--tweet-to-node").trim();
     this.tweetTheme = style.getPropertyValue("--tweet-theme").trim();
     this.aggregationPane = this.makeEmptyElement("aggregation-pane");
-    this.aggregationPane.style.width = "800px";
+    this.aggregationPane.style.width = "400px";
     this.aggregationPane.style.height = "150px";
     this.aggregationPane.style.background = "transparent";
     this.aggregationPane.style.position = "absolute";
@@ -21501,10 +21527,13 @@ var TwitterView = class {
     if (svg2.size() === 0) {
       svg2 = select(".aggregation-pane").append("svg").style("width", "100%").style("height", "100%");
     }
+    const extent = [0, Math.max(...topUsers.map((d) => d[1]))];
+    const xscale = scaleLinear().range([0, 300]).domain(extent);
     svg2.selectAll("*").remove();
-    const userRow = svg2.append("g").selectAll(".user-row").data(topUsers).enter().append("g").classed("user-row", true);
-    userRow.append("rect").attr("x", 2).attr("y", (d, i) => i * 22 + 11).attr("width", (d) => d[1] * 0.2).attr("height", 16).attr("fill-opacity", 0.9).attr("stroke", null).attr("fill", "#28C");
-    userRow.append("text").attr("x", 10).attr("y", (d, i) => (i + 1) * 22).style("font-size", "11px").style("fill", "#eef2ee").text((d) => d[0]);
+    svg2.append("text").attr("x", 5).attr("y", 20).style("fill", "#eef2ee").style("font-size", "14px").text("Top user accounts");
+    const userRow = svg2.append("g").attr("transform", "translate(0, 20)").selectAll(".user-row").data(topUsers).enter().append("g").classed("user-row", true);
+    userRow.append("rect").attr("x", 2).attr("y", (d, i) => i * 22 + 11).attr("rx", 3).attr("ry", 3).attr("width", (d) => xscale(d[1])).attr("height", 16).attr("fill-opacity", 0.9).attr("stroke", null).attr("fill", "#28C");
+    userRow.append("text").attr("x", 10).attr("y", (d, i) => (i + 1) * 22).style("font-size", "11px").style("fill", "#eef2ee").text((d) => d[0] + " - " + d[1]);
   }
   initializeEvents() {
     let animationFrame = null;
@@ -21697,30 +21726,21 @@ var SnapshotsView = class {
     this.twitter = twitter;
     this.snapshots = snapshots || [];
     this.transitioning = false;
-    this.descriptionMarkDown = `# Title
+    this.descriptionMarkDown = `# Goodnight Dario
 A **description**..`;
     this.descriptionHTML = markdownConverter.makeHtml(this.descriptionMarkDown);
     this.current = -1;
+    this.isEditMode = false;
     this.createSnapshotMenu();
   }
   createSnapshotMenu() {
     const el = document.createElement("div");
     el.className = "snapshot-menu";
-    const row1 = this.createRow(el);
-    this.createSnapshotButton(row1, "TAKE SNAPSHOT", () => {
-      const cameraPosition = new Float32Array(this.grafer.controller.viewport.camera.position);
-      const nodes = [];
-      for (const info of this.twitter.tweets.values()) {
-        nodes.push(info.tweet.node.id);
-      }
-      this.current = this.snapshots.length;
-      this.snapshots.push({
-        cameraPosition,
-        nodes,
-        description: this.descriptionMarkDown
-      });
-      console.log(this.snapshots[this.snapshots.length - 1]);
-    });
+    const markdownContainerEl = document.createElement("div");
+    markdownContainerEl.className = "snapshots-markdown-container";
+    markdownContainerEl.id = "snapshots-markdown-container-id";
+    markdownContainerEl.innerHTML = this.descriptionHTML;
+    el.appendChild(markdownContainerEl);
     const row2 = this.createRow(el);
     this.createSnapshotButton(row2, "PREVIOUS", () => {
       if (!this.transitioning && this.current > 0) {
@@ -21732,34 +21752,17 @@ A **description**..`;
         this.showSnapshot(this.snapshots[++this.current]);
       }
     });
-    const row3 = this.createRow(el);
-    this.createDescriptionInputField(row3);
-    const row4 = this.createRow(el);
-    this.createSnapshotButton(row4, "EDIT", () => {
-      const cameraPosition = new Float32Array(this.grafer.controller.viewport.camera.position);
-      const nodes = [];
-      for (const info of this.twitter.tweets.values()) {
-        nodes.push(info.tweet.node.id);
+    const editModeRow = this.createRow(el);
+    this.createSnapshotButton(editModeRow, "Toggle Edit Mode", () => {
+      if (this.isEditMode) {
+        document.getElementById("snapshots-editor-panel-container-id").style.display = "none";
+        this.isEditMode = false;
+      } else {
+        document.getElementById("snapshots-editor-panel-container-id").style.display = "block";
+        this.isEditMode = true;
       }
-      this.snapshots[this.current] = {
-        cameraPosition,
-        nodes,
-        description: this.descriptionMarkDown
-      };
     });
-    this.createSnapshotButton(row4, "DOWNLOAD", () => {
-      const d = new Date();
-      const exportFileName = `snapshots-${d.getMonth()}-${d.getDate()}-${d.getHours()}-${d.getMinutes()}-${d.getSeconds()}`;
-      downloadObjectAsJson(this.snapshots, exportFileName);
-    });
-    this.createUploadSnapshotsFileButton(el, (snapshots) => {
-      this.snapshots = snapshots;
-    });
-    const markdownContainerEl = document.createElement("div");
-    markdownContainerEl.className = "snapshots-markdown-container";
-    markdownContainerEl.id = "snapshots-markdown-container-id";
-    markdownContainerEl.innerHTML = this.descriptionHTML;
-    el.appendChild(markdownContainerEl);
+    this.createEditorPanel(el);
     this.element.appendChild(el);
   }
   showSnapshot(info) {
@@ -21858,6 +21861,52 @@ A **description**..`;
       document.getElementById("snapshots-markdown-container-id").innerHTML = this.descriptionHTML;
     });
     container.appendChild(formEl);
+  }
+  createEditorPanel(container) {
+    const editorPanelContainer = document.createElement("div");
+    editorPanelContainer.className = "snapshots-editor-panel-container";
+    editorPanelContainer.id = "snapshots-editor-panel-container-id";
+    if (!this.isEditMode) {
+      editorPanelContainer.style.display = "none";
+    }
+    const row1 = this.createRow(editorPanelContainer);
+    this.createSnapshotButton(row1, "TAKE SNAPSHOT", () => {
+      const cameraPosition = new Float32Array(this.grafer.controller.viewport.camera.position);
+      const nodes = [];
+      for (const info of this.twitter.tweets.values()) {
+        nodes.push(info.tweet.node.id);
+      }
+      this.current = this.snapshots.length;
+      this.snapshots.push({
+        cameraPosition,
+        nodes,
+        description: this.descriptionMarkDown
+      });
+    });
+    const row3 = this.createRow(editorPanelContainer);
+    this.createDescriptionInputField(row3);
+    const row4 = this.createRow(editorPanelContainer);
+    this.createSnapshotButton(row4, "EDIT", () => {
+      const cameraPosition = new Float32Array(this.grafer.controller.viewport.camera.position);
+      const nodes = [];
+      for (const info of this.twitter.tweets.values()) {
+        nodes.push(info.tweet.node.id);
+      }
+      this.snapshots[this.current] = {
+        cameraPosition,
+        nodes,
+        description: this.descriptionMarkDown
+      };
+    });
+    this.createSnapshotButton(row4, "DOWNLOAD", () => {
+      const d = new Date();
+      const exportFileName = `snapshots-${d.getMonth()}-${d.getDate()}-${d.getHours()}-${d.getMinutes()}-${d.getSeconds()}`;
+      downloadObjectAsJson(this.snapshots, exportFileName);
+    });
+    this.createUploadSnapshotsFileButton(editorPanelContainer, (snapshots) => {
+      this.snapshots = snapshots;
+    });
+    container.appendChild(editorPanelContainer);
   }
 };
 
