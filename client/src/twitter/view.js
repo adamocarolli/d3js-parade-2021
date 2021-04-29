@@ -1,3 +1,5 @@
+// eslint-disable-next-line import/no-unresolved
+import * as d3 from 'https://cdn.skypack.dev/d3';
 import {Tweet} from './tweet.js';
 import {Link} from './link.js';
 
@@ -30,7 +32,50 @@ export class TwitterView {
         this.linkColor = style.getPropertyValue('--tweet-to-node').trim();
         this.tweetTheme = style.getPropertyValue('--tweet-theme').trim();
 
+        this.aggregationPane = this.makeEmptyElement('aggregation-pane');
+        this.aggregationPane.style.width = '800px';
+        this.aggregationPane.style.height = '150px';
+        this.aggregationPane.style.background = 'transparent';
+        this.aggregationPane.style.position = 'absolute';
+        this.aggregationPane.style.bottom = `20px`;
+        this.aggregationPane.style.left = '16px';
+        this.aggregationPane.style['pointer-events']= 'none';
+        document.body.appendChild(this.aggregationPane);
+
         this.initializeEvents();
+    }
+
+
+    renderAggregationPane(topUsers) {
+        let svg = d3.select('.aggregation-pane').select('svg');
+        if (svg.size() === 0) {
+          svg = d3.select('.aggregation-pane').append('svg')
+            .style('width', '100%')
+            .style('height', '100%');
+        }
+        svg.selectAll('*').remove();
+        const userRow = svg.append('g')
+          .selectAll('.user-row')
+          .data(topUsers)
+          .enter()
+          .append('g')
+          .classed('user-row', true);
+
+        userRow.append('rect')
+          .attr('x', 2)
+          .attr('y', (d, i) => (i) * 22 + 11)
+          .attr('width', d => d[1] * 0.2)
+          .attr('height', 16)
+          .attr('fill-opacity', 0.9)
+          .attr('stroke', null)
+          .attr('fill', '#28C');
+
+        userRow.append('text')
+          .attr('x', 10)
+          .attr('y', (d, i) => (i + 1) * 22)
+          .style('font-size', '11px')
+          .style('fill', '#eef2ee')
+          .text(d => d[0]);
     }
 
     initializeEvents() {
@@ -65,13 +110,12 @@ export class TwitterView {
         };
 
         // Daniel hack
-        const pixelRatio = window.devicePixelRatio;
         const _old_render = this.grafer.controller.viewport._render.bind(this.grafer.controller.viewport);
         this.grafer.controller.viewport._render = () => {
             _old_render();
             const inView = [];
             if (this.grafer.controller.viewport.renderMode === 2) {
-                console.log('HELLO DEBOUNCED RENDER', this.grafer.nodes.size);
+                // console.log('HELLO DEBOUNCED RENDER', this.grafer.nodes.size);
                 for (const node of this.grafer.nodes.values()) {
                     const point = this.grafer.getWorldPointPosition(node.point);
                     const screenPoint = this.grafer.worldToPixel(point);
@@ -94,8 +138,8 @@ export class TwitterView {
                             userMap.set(tweet.user, userMap.get(tweet.user) + 1);
                         }
                     }
-                    const topUsers = [...userMap.entries()].sort((a, b) => b[1] - a[1]).slice(0, 10);
-                    console.log('top', topUsers);
+                    const topUsers = [...userMap.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
+                    this.renderAggregationPane(topUsers);
                 }
             }
         };
