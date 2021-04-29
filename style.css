@@ -2,15 +2,15 @@
     /* grafer colours */
     --grafer-background: #242933;
     --grafer-nodes: #6da7de;
-    --grafer-node-edges: #ff38ba;
+    --grafer-node-edges: #f8933a;
     --grafer-clusters: #4c566a;
     --grafer-cluster-edges: #AAB8C2;
 
     /* tweets colours */
     --tweet-theme: light;
-    --tweet-to-node: #ee266d;
+    --tweet-to-node: #cc5e44;
     --tweet-container-background: #14171A;
-    --tweet-container-border: transparent;
+    --tweet-container-border: rgba(255, 255, 255, 0.1);
     --tweet-container-close: #AAB8C2;
     --tweet-raw-backgroung: #FFFFFF;
     --tweet-raw-border: #BFCFDF;
@@ -19,7 +19,7 @@
 
     /* loading widget colours */
     --loading-text: #6da7de;
-    --loading-ring-primary: #ff38ba;
+    --loading-ring-primary: #f8933a;
     --loading-ring-secondary: #6da7de;
     --loading-ring-spin-time: 0.85s;
 }
@@ -40,18 +40,30 @@ a {
 
 .snapshot-menu {
     position: absolute;
-    left: 50px;
-    top: 50px;
+    left: 16px;
+    top: 16px;
     user-select: none;
-    display: flex;
-    flex-direction: column;
     background-color: rgba(0, 0, 0, 0.2);
+}
+
+.snapshot-row {
+    display: flex;
+    justify-content: space-around;
 }
 
 .snapshot-button {
     color: #1DA1F2;
     user-select: none;
     cursor: pointer;
+    display: flex;
+    padding: 8px 16px;
+    flex: 1;
+    justify-content: center;
+    border-radius: 100px;
+}
+
+.snapshots-markdown-container {
+    color: #1DA1F2;
 }
 
 .data-loading {
@@ -77,6 +89,7 @@ a {
     width: 100px;
     height: 100px;
 }
+
 .lds-dual-ring:after {
     content: " ";
     display: block;
@@ -124,24 +137,46 @@ a {
 
 .twitter-header {
     width: 100%;
-    height: 60px;
-    min-height: 60px;
-    background-color: #AAB8C2;
+    min-height: 130px;
+    position: relative;
+}
+
+.twitter-header:before {
+    z-index: 0;
+    border-bottom-left-radius: 20px;
+    background-color: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(15px) saturate(150%);
+    content: '';
+    height: 100%;
+    position: absolute;
+    width: 100%;
+}
+
+.twitter-header * {
+    z-index: 1;
 }
 
 .twitter-header-title {
     color: #F5F8FA;
     font-size: 24px;
     font-weight: 700;
-    padding: 6px 6px 2px;
+    padding: 0 16px;
     text-align: center;
     user-select: none;
+    display: flex;
+    justify-content: flex-end;
+    align-items: baseline;
+    padding-right: 35px;
+    transform: translate(0, -8%);
 }
 
 .twitter-header-menu {
     color: #E1E8ED;
-    padding: 0 32px;
+    padding: 0 16px;
     text-align: right;
+    display: grid;
+    padding-right: 35px;
+    transform: translate(0, -50%);
 }
 
 .twitter-header-menu span {
@@ -168,7 +203,6 @@ a {
 }
 
 .tweet-container {
-    background-color: var(--tweet-container-background);
     border-radius: 10px;
     border: var(--tweet-container-border) solid 3px;
     margin: 6px 0;
@@ -178,6 +212,21 @@ a {
     padding-top: 12px;
     box-sizing: border-box;
     overflow: hidden;
+}
+
+.tweet-container > * {
+    z-index: 1;
+}
+
+.tweet-container:before {
+    margin-top: -12px;
+    z-index: 0;
+    background-color: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(15px) saturate(150%);
+    content: '';
+    height: 100%;
+    position: absolute;
+    width: 100%;
 }
 
 .collapsable {
