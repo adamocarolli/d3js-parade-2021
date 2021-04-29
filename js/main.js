@@ -21813,6 +21813,7 @@ A **description**..`;
     }
     updateTweets();
     document.getElementById("story-textarea-id").value = info.description;
+    document.getElementById("snapshots-markdown-container-id").innerHTML = markdownConverter.makeHtml(info.description);
   }
   createRow(container) {
     const el = document.createElement("div");
