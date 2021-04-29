@@ -16,7 +16,7 @@ export class SnapshotsView {
         this.twitter = twitter;
         this.snapshots = snapshots || [];
         this.transitioning = false;
-        this.descriptionMarkDown = `# Goodnight Dario\nA **description**..`;
+        this.descriptionMarkDown = `## Welcome\nClick **NEXT** to begin the tour.`;
         this.descriptionHTML = markdownConverter.makeHtml(this.descriptionMarkDown);
         this.current = -1;
         this.isEditMode = false;
