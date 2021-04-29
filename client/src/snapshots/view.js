@@ -166,6 +166,7 @@ export class SnapshotsView {
 
         // Update description
         document.getElementById('story-textarea-id').value = info.description;
+        document.getElementById('snapshots-markdown-container-id').innerHTML = markdownConverter.makeHtml(info.description);
     }
 
     createRow(container) {
