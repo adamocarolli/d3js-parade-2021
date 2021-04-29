@@ -21726,8 +21726,8 @@ var SnapshotsView = class {
     this.twitter = twitter;
     this.snapshots = snapshots || [];
     this.transitioning = false;
-    this.descriptionMarkDown = `# Goodnight Dario
-A **description**..`;
+    this.descriptionMarkDown = `## Welcome
+Click **NEXT** to begin the tour.`;
     this.descriptionHTML = markdownConverter.makeHtml(this.descriptionMarkDown);
     this.current = -1;
     this.isEditMode = false;
