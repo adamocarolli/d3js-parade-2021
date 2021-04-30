@@ -240,7 +240,7 @@ export class GraferView extends EventEmitter {
                 // type: 'RingLabel',
                 data: [],
                 mappings: {
-                    fontSize: () => 32,
+                    fontSize: () => 16,
                     padding: () => 6,
                 },
                 options: {

@@ -117,7 +117,7 @@ export class TwitterView {
 
                   row.append('text')
                     .attr('x', 10)
-                    .attr('y', (6 + 1) * 22 + offset)
+                    .attr('y', (topUsers.length + 1) * 22 + offset)
                     .style('font-size', '12px')
                     .style('fill', '#eef2ee')
                     .text(d => d[0] + ' - ' + d[1])
@@ -165,14 +165,13 @@ export class TwitterView {
 
                   row.append('text')
                     .attr('x', 10)
-                    .attr('y', (6 + 1) * 22 + offset)
+                    .attr('y', (topTags.length + 1) * 22 + offset)
                     .style('font-size', '12px')
                     .style('fill', '#eef2ee')
                     .text(d => d[0] + ' - ' + d[1])
                     .transition()
                     .duration(800)
                     .attr('y', (d) => (d[2] + 1) * 22 + offset);
-
               },
               update => {
                   update.select('rect')
@@ -294,6 +293,8 @@ export class TwitterView {
                     for (let i = 0; i < inView.length; i++) {
                         // Users
                         const key = inView[i].label;
+                        if (!cache[key]) continue;
+
                         const user = cache[key].user;
 
                         if (!userMap.has(user)) {

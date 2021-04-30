@@ -1,6 +1,8 @@
 import {GraferView} from './grafer/view';
 import {TwitterView} from './twitter/view';
 import {SnapshotsView} from './snapshots/view';
+// eslint-disable-next-line import/no-unresolved
+import * as d3 from 'https://cdn.skypack.dev/d3';
 
 function createLoading(container) {
     const el = document.createElement('div');
@@ -25,7 +27,6 @@ async function main() {
     const dataPack = pathComponents.pop() || 'adam_inferred';
 
     const grafer = new GraferView(document.body);
-
     const loading = createLoading(document.body);
 
     grafer.init(dataPack).then(() => {
@@ -36,10 +37,10 @@ async function main() {
 
         loading.parentElement.removeChild(loading);
 
-        // TODO: Load snapshots from file for default snapshot
-        const snapshots = [];
-        // eslint-disable-next-line no-new
+        d3.json('layouts/adam_d3js/inferred/snapshots-3-30-0-6-33.json').then(snapshots => {
+            // eslint-disable-next-line no-new
         new SnapshotsView(document.body, grafer, twitter, snapshots);
+        });
     });
 }
 
