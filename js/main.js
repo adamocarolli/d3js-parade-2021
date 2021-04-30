@@ -21333,6 +21333,7 @@ var GraferView2 = class extends EventEmitter {
 
 // src/twitter/view.js
 import {
+  dsv,
   scaleLinear,
   select
 } from "https://cdn.skypack.dev/d3";
@@ -21513,27 +21514,45 @@ var TwitterView = class {
     this.tweetTheme = style.getPropertyValue("--tweet-theme").trim();
     this.aggregationPane = this.makeEmptyElement("aggregation-pane");
     this.aggregationPane.style.width = "400px";
-    this.aggregationPane.style.height = "150px";
+    this.aggregationPane.style.height = "290px";
     this.aggregationPane.style.background = "transparent";
     this.aggregationPane.style.position = "absolute";
     this.aggregationPane.style.bottom = `20px`;
     this.aggregationPane.style.left = "16px";
     this.aggregationPane.style["pointer-events"] = "none";
     document.body.appendChild(this.aggregationPane);
+    this.metadataCache = {};
+    dsv(",", "layouts/adam_d3js/inferred/meta.csv").then((data) => {
+      for (let i = 0; i < data.length; i++) {
+        const row = data[i];
+        this.metadataCache[row.id] = {
+          user: row.user,
+          hashtags: row.hashtags ? row.hashtags.split(" ") : []
+        };
+      }
+    });
     this.initializeEvents();
   }
-  renderAggregationPane(topUsers) {
+  renderAggregationPane(topUsers, topTags) {
     let svg2 = select(".aggregation-pane").select("svg");
     if (svg2.size() === 0) {
       svg2 = select(".aggregation-pane").append("svg").style("width", "100%").style("height", "100%");
     }
-    const extent = [0, Math.max(...topUsers.map((d) => d[1]))];
-    const xscale = scaleLinear().range([0, 300]).domain(extent);
+    const userExtent = [0, Math.max(...topUsers.map((d) => d[1]))];
+    const userXScale = scaleLinear().range([0, 250]).domain(userExtent);
+    const tagExtent = [0, Math.max(...topTags.map((d) => d[1]))];
+    const tagXScale = scaleLinear().range([0, 250]).domain(tagExtent);
     svg2.selectAll("*").remove();
-    svg2.append("text").attr("x", 5).attr("y", 20).style("fill", "#eef2ee").style("font-size", "14px").text("Top user accounts");
-    const userRow = svg2.append("g").attr("transform", "translate(0, 20)").selectAll(".user-row").data(topUsers).enter().append("g").classed("user-row", true);
-    userRow.append("rect").attr("x", 2).attr("y", (d, i) => i * 22 + 11).attr("rx", 3).attr("ry", 3).attr("width", (d) => xscale(d[1])).attr("height", 16).attr("fill-opacity", 0.9).attr("stroke", null).attr("fill", "#28C");
-    userRow.append("text").attr("x", 10).attr("y", (d, i) => (i + 1) * 22).style("font-size", "11px").style("fill", "#eef2ee").text((d) => d[0] + " - " + d[1]);
+    const userG = svg2.append("g");
+    const tagG = svg2.append("g").attr("transform", "translate(0, 140)");
+    userG.append("text").attr("x", 5).attr("y", 20).style("fill", "#eef2ee").style("font-size", "14px").text("Top users");
+    tagG.append("text").attr("x", 5).attr("y", 20).style("fill", "#eef2ee").style("font-size", "14px").text("Top hashtags");
+    const userRow = userG.append("g").attr("transform", "translate(0, 20)").selectAll(".user-row").data(topUsers).enter().append("g").classed("user-row", true);
+    const tagRow = tagG.append("g").attr("transform", "translate(0, 20)").selectAll(".user-row").data(topTags).enter().append("g").classed("user-row", true);
+    userRow.append("rect").attr("x", 2).attr("y", (d, i) => i * 22 + 10).attr("rx", 3).attr("ry", 3).attr("width", (d) => userXScale(d[1])).attr("height", 16).attr("fill-opacity", 0.8).attr("stroke", null).attr("fill", "#27A");
+    userRow.append("text").attr("x", 10).attr("y", (d, i) => (i + 1) * 22).style("font-size", "12px").style("fill", "#eef2ee").text((d) => d[0] + " - " + d[1]);
+    tagRow.append("rect").attr("x", 2).attr("y", (d, i) => i * 22 + 10).attr("rx", 3).attr("ry", 3).attr("width", (d) => tagXScale(d[1])).attr("height", 16).attr("fill-opacity", 0.8).attr("stroke", null).attr("fill", "#582");
+    tagRow.append("text").attr("x", 10).attr("y", (d, i) => (i + 1) * 22).style("font-size", "12px").style("fill", "#eef2ee").text((d) => d[0] + " - " + d[1]);
   }
   initializeEvents() {
     let animationFrame = null;
@@ -21564,6 +21583,7 @@ var TwitterView = class {
     this.grafer.controller.viewport._render = () => {
       _old_render();
       const inView = [];
+      const blacklist = ["javascript", "js", "dataviz"];
       if (this.grafer.controller.viewport.renderMode === 2) {
         for (const node of this.grafer.nodes.values()) {
           const point = this.grafer.getWorldPointPosition(node.point);
@@ -21575,18 +21595,32 @@ var TwitterView = class {
           }
         }
         if (inView.length > 0) {
-          console.log("D3 hacking begins", inView.length);
           const userMap = new Map();
+          const tagMap = new Map();
+          const cache = this.metadataCache;
           for (let i = 0; i < inView.length; i++) {
-            const tweet = inView[i].tweet;
-            if (!userMap.has(tweet.user)) {
-              userMap.set(tweet.user, 1);
+            const key = inView[i].label;
+            const user = cache[key].user;
+            if (!userMap.has(user)) {
+              userMap.set(user, 1);
             } else {
-              userMap.set(tweet.user, userMap.get(tweet.user) + 1);
+              userMap.set(user, userMap.get(user) + 1);
+            }
+            const hashtags = cache[key].hashtags;
+            for (let j = 0; j < hashtags.length; j++) {
+              const tag = hashtags[j];
+              if (blacklist.indexOf(tag) >= 0)
+                continue;
+              if (!tagMap.has(tag)) {
+                tagMap.set(tag, 1);
+              } else {
+                tagMap.set(tag, tagMap.get(tag) + 1);
+              }
             }
           }
           const topUsers = [...userMap.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
-          this.renderAggregationPane(topUsers);
+          const topTags = [...tagMap.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
+          this.renderAggregationPane(topUsers, topTags);
         }
       }
     };
