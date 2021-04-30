@@ -68,13 +68,6 @@ a {
     z-index: 1;
 }
 
-.snapshot-subtitle {
-   font-size: 14px;
-   color: #dbe5f1;
-   margin-left: 10px;
-   font-family: 'Lato', sans-serif;
-}
-
 .snapshot-row {
     display: flex;
     justify-content: space-around;

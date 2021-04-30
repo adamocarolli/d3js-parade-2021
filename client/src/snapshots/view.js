@@ -65,15 +65,6 @@ export class SnapshotsView {
         this.element.appendChild(el);
     }
 
-    createSubtitle(container, text) {
-        const subtitle = document.createElement('p');
-        subtitle.className = 'snapshot-subtitle';
-        subtitle.innerText = text;
-
-        container.appendChild(subtitle);
-        return subtitle;    
-    }
-
     showSnapshot(info) {
         const self = this;
         this.transitioning = true;
