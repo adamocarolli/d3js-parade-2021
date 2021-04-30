@@ -51,7 +51,7 @@ export class SnapshotsView {
         });
 
         const editModeRow = this.createRow(el);
-        this.createSnapshotButton(editModeRow, 'Toggle Edit Mode', () => {
+        this.createSnapshotButton(editModeRow, 'Toggle Edit Mode \u270D', () => {
             if (this.isEditMode) {
                 document.getElementById('snapshots-editor-panel-container-id').style.display = 'none';
                 this.isEditMode = false;
@@ -204,7 +204,7 @@ export class SnapshotsView {
         }
 
         const row1 = this.createRow(editorPanelContainer);
-        this.createSnapshotButton(row1, 'TAKE SNAPSHOT', () => {
+        this.createSnapshotButton(row1, 'TAKE SNAPSHOT \uD83D\uDCF7', () => {
             const cameraPosition = new Float32Array(this.grafer.controller.viewport.camera.position);
             const nodes = [];
             for (const info of this.twitter.tweets.values()) {
@@ -223,7 +223,7 @@ export class SnapshotsView {
         this.createDescriptionInputField(row3);
 
         const row4 = this.createRow(editorPanelContainer);
-        this.createSnapshotButton(row4, 'EDIT', () => {
+        this.createSnapshotButton(row4, 'EDIT \u270D', () => {
             // Edit current snapshot
             const cameraPosition = new Float32Array(this.grafer.controller.viewport.camera.position);
             const nodes = [];
