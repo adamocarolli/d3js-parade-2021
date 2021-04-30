@@ -16,7 +16,7 @@ export class SnapshotsView {
         this.twitter = twitter;
         this.snapshots = snapshots || [];
         this.transitioning = false;
-        this.descriptionMarkDown = `## Welcome\nClick **NEXT** to begin the tour.`;
+        this.descriptionMarkDown = `## Visualizing d3.js history on Twitter\nA visual story on how the conversation on d3.js has evolved over time. Click **NEXT** to begin the tour.`;
         this.descriptionHTML = markdownConverter.makeHtml(this.descriptionMarkDown);
         this.current = -1;
         this.isEditMode = false;
@@ -35,13 +35,16 @@ export class SnapshotsView {
         markdownContainerEl.innerHTML = this.descriptionHTML;
         el.appendChild(markdownContainerEl);
 
+        // const subtitle = this.createRow(el);
+        // this.createSubtitle(subtitle, 'A visual story on how the conversation on d3.js has evolved over time');
+
         const row2 = this.createRow(el);
-        this.createSnapshotButton(row2, 'PREVIOUS', () => {
+        this.createSnapshotButton(row2, '\u276E PREVIOUS', () => {
             if (!this.transitioning && this.current > 0) {
                 this.showSnapshot(this.snapshots[--this.current]);
             }
         });
-        this.createSnapshotButton(row2, 'NEXT', () => {
+        this.createSnapshotButton(row2, 'NEXT \u276F', () => {
             if (!this.transitioning && this.current < this.snapshots.length - 1) {
                 this.showSnapshot(this.snapshots[++this.current]);
             }
@@ -60,6 +63,15 @@ export class SnapshotsView {
         this.createEditorPanel(el);
 
         this.element.appendChild(el);
+    }
+
+    createSubtitle(container, text) {
+        const subtitle = document.createElement('p');
+        subtitle.className = 'snapshot-subtitle';
+        subtitle.innerText = text;
+
+        container.appendChild(subtitle);
+        return subtitle;    
     }
 
     showSnapshot(info) {
