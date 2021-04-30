@@ -21553,7 +21553,7 @@ var TwitterView = class {
     const offset = 20;
     userG.selectAll(".user-row").data(topUsers, (d) => d[0]).join((enter) => {
       const row = enter.append("g").classed("user-row", true);
-      row.append("rect").attr("x", 2).attr("y", topUsers.length * 22 + 10 + offset).attr("rx", 3).attr("ry", 3).attr("width", (d) => userXScale(d[1])).attr("height", 16).attr("fill-opacity", 0.8).attr("stroke", null).attr("fill", "#27A").transition().duration(800).attr("y", (d) => d[2] * 22 + 10 + offset);
+      row.append("rect").attr("x", 2).attr("y", topUsers.length * 22 + 10 + offset).attr("rx", 3).attr("ry", 3).attr("width", (d) => userXScale(d[1])).attr("height", 16).attr("fill-opacity", 0.7).attr("stroke", null).attr("fill", "#6da7de").transition().duration(800).attr("y", (d) => d[2] * 22 + 10 + offset);
       row.append("text").attr("x", 10).attr("y", (topUsers.length + 1) * 22 + offset).style("font-size", "12px").style("fill", "#eef2ee").text((d) => d[0] + " - " + d[1]).transition().duration(800).attr("y", (d) => (d[2] + 1) * 22 + offset);
     }, (update) => {
       update.select("rect").transition().duration(800).attr("y", (d) => d[2] * 22 + 10 + offset).attr("width", (d) => userXScale(d[1]));
@@ -21563,7 +21563,7 @@ var TwitterView = class {
     });
     tagG.selectAll(".tag-row").data(topTags, (d) => d[0]).join((enter) => {
       const row = enter.append("g").classed("tag-row", true);
-      row.append("rect").attr("x", 2).attr("y", topTags.length * 22 + 10 + offset).attr("rx", 3).attr("ry", 3).attr("width", (d) => tagXScale(d[1])).attr("height", 16).attr("fill-opacity", 0.8).attr("stroke", null).attr("fill", "#582").transition().duration(800).attr("y", (d) => d[2] * 22 + 10 + offset);
+      row.append("rect").attr("x", 2).attr("y", topTags.length * 22 + 10 + offset).attr("rx", 3).attr("ry", 3).attr("width", (d) => tagXScale(d[1])).attr("height", 16).attr("fill-opacity", 0.7).attr("stroke", null).attr("fill", "#f8933a").transition().duration(800).attr("y", (d) => d[2] * 22 + 10 + offset);
       row.append("text").attr("x", 10).attr("y", (topTags.length + 1) * 22 + offset).style("font-size", "12px").style("fill", "#eef2ee").text((d) => d[0] + " - " + d[1]).transition().duration(800).attr("y", (d) => (d[2] + 1) * 22 + offset);
     }, (update) => {
       update.select("rect").transition().duration(800).attr("y", (d) => d[2] * 22 + 10 + offset).attr("width", (d) => tagXScale(d[1]));
@@ -21780,8 +21780,8 @@ var SnapshotsView = class {
     this.twitter = twitter;
     this.snapshots = snapshots || [];
     this.transitioning = false;
-    this.descriptionMarkDown = `## Welcome
-Click **NEXT** to begin the tour.`;
+    this.descriptionMarkDown = `## Visualizing d3.js history on Twitter
+A visual story on how the conversation on d3.js has evolved over time. Click **NEXT** to begin the tour.`;
     this.descriptionHTML = markdownConverter.makeHtml(this.descriptionMarkDown);
     this.current = -1;
     this.isEditMode = false;
@@ -21796,18 +21796,18 @@ Click **NEXT** to begin the tour.`;
     markdownContainerEl.innerHTML = this.descriptionHTML;
     el.appendChild(markdownContainerEl);
     const row2 = this.createRow(el);
-    this.createSnapshotButton(row2, "PREVIOUS", () => {
+    this.createSnapshotButton(row2, "\u276E PREVIOUS", () => {
       if (!this.transitioning && this.current > 0) {
         this.showSnapshot(this.snapshots[--this.current]);
       }
     });
-    this.createSnapshotButton(row2, "NEXT", () => {
+    this.createSnapshotButton(row2, "NEXT \u276F", () => {
       if (!this.transitioning && this.current < this.snapshots.length - 1) {
         this.showSnapshot(this.snapshots[++this.current]);
       }
     });
     const editModeRow = this.createRow(el);
-    this.createSnapshotButton(editModeRow, "Toggle Edit Mode", () => {
+    this.createSnapshotButton(editModeRow, "Toggle Edit Mode \u270D", () => {
       if (this.isEditMode) {
         document.getElementById("snapshots-editor-panel-container-id").style.display = "none";
         this.isEditMode = false;
@@ -21924,7 +21924,8 @@ Click **NEXT** to begin the tour.`;
       editorPanelContainer.style.display = "none";
     }
     const row1 = this.createRow(editorPanelContainer);
-    this.createSnapshotButton(row1, "TAKE SNAPSHOT", () => {
+    this.createDescriptionInputField(row1);
+    this.createSnapshotButton(row1, "\u{1F4F7}", () => {
       const cameraPosition = new Float32Array(this.grafer.controller.viewport.camera.position);
       const nodes = [];
       for (const info of this.twitter.tweets.values()) {
@@ -21937,10 +21938,7 @@ Click **NEXT** to begin the tour.`;
         description: this.descriptionMarkDown
       });
     });
-    const row3 = this.createRow(editorPanelContainer);
-    this.createDescriptionInputField(row3);
-    const row4 = this.createRow(editorPanelContainer);
-    this.createSnapshotButton(row4, "EDIT", () => {
+    this.createSnapshotButton(row1, "\u270D", () => {
       const cameraPosition = new Float32Array(this.grafer.controller.viewport.camera.position);
       const nodes = [];
       for (const info of this.twitter.tweets.values()) {
@@ -21952,12 +21950,13 @@ Click **NEXT** to begin the tour.`;
         description: this.descriptionMarkDown
       };
     });
-    this.createSnapshotButton(row4, "DOWNLOAD", () => {
+    this.createSnapshotButton(row1, "\u2193", () => {
       const d = new Date();
       const exportFileName = `snapshots-${d.getMonth()}-${d.getDate()}-${d.getHours()}-${d.getMinutes()}-${d.getSeconds()}`;
       downloadObjectAsJson(this.snapshots, exportFileName);
     });
-    this.createUploadSnapshotsFileButton(editorPanelContainer, (snapshots) => {
+    const row2 = this.createRow(editorPanelContainer);
+    this.createUploadSnapshotsFileButton(row2, (snapshots) => {
       this.snapshots = snapshots;
     });
     container.appendChild(editorPanelContainer);
