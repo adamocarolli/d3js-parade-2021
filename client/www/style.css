@@ -68,6 +68,13 @@ a {
     z-index: 1;
 }
 
+.snapshot-subtitle {
+   font-size: 14px;
+   color: #dbe5f1;
+   margin-left: 10px;
+   font-family: 'Lato', sans-serif;
+}
+
 .snapshot-row {
     display: flex;
     justify-content: space-around;
@@ -87,11 +94,13 @@ a {
     background: rgba(255,255,255,0.15);
     opacity: 0.7;
     transition: opacity 0.2s ease;
+    font-family: 'Lato', sans-serif;
 }
 
 .snapshot-button:hover {
     opacity: 1;
 }
+
 
 .description-form {
     margin-top: 5px;
@@ -102,6 +111,7 @@ a {
     font-family: 'Lato', sans-serif;
     margin-left: 20px;
 }
+
 
 .aggregation-pane {
     font-family: 'Lato', sans-serif;
