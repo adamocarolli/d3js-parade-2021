@@ -21537,22 +21537,40 @@ var TwitterView = class {
     let svg2 = select(".aggregation-pane").select("svg");
     if (svg2.size() === 0) {
       svg2 = select(".aggregation-pane").append("svg").style("width", "100%").style("height", "100%");
+      svg2.append("g").classed("users", true).append("text").attr("x", 5).attr("y", 20).style("fill", "#eef2ee").style("font-size", "14px").text("Top users");
+      svg2.append("g").classed("hashtags", true).attr("transform", "translate(0, 140)").append("text").attr("x", 5).attr("y", 20).style("fill", "#eef2ee").style("font-size", "14px").text("Top hashtags");
     }
     const userExtent = [0, Math.max(...topUsers.map((d) => d[1]))];
     const userXScale = scaleLinear().range([0, 250]).domain(userExtent);
     const tagExtent = [0, Math.max(...topTags.map((d) => d[1]))];
     const tagXScale = scaleLinear().range([0, 250]).domain(tagExtent);
-    svg2.selectAll("*").remove();
-    const userG = svg2.append("g");
-    const tagG = svg2.append("g").attr("transform", "translate(0, 140)");
-    userG.append("text").attr("x", 5).attr("y", 20).style("fill", "#eef2ee").style("font-size", "14px").text("Top users");
-    tagG.append("text").attr("x", 5).attr("y", 20).style("fill", "#eef2ee").style("font-size", "14px").text("Top hashtags");
-    const userRow = userG.append("g").attr("transform", "translate(0, 20)").selectAll(".user-row").data(topUsers).enter().append("g").classed("user-row", true);
-    const tagRow = tagG.append("g").attr("transform", "translate(0, 20)").selectAll(".user-row").data(topTags).enter().append("g").classed("user-row", true);
-    userRow.append("rect").attr("x", 2).attr("y", (d, i) => i * 22 + 10).attr("rx", 3).attr("ry", 3).attr("width", (d) => userXScale(d[1])).attr("height", 16).attr("fill-opacity", 0.8).attr("stroke", null).attr("fill", "#27A");
-    userRow.append("text").attr("x", 10).attr("y", (d, i) => (i + 1) * 22).style("font-size", "12px").style("fill", "#eef2ee").text((d) => d[0] + " - " + d[1]);
-    tagRow.append("rect").attr("x", 2).attr("y", (d, i) => i * 22 + 10).attr("rx", 3).attr("ry", 3).attr("width", (d) => tagXScale(d[1])).attr("height", 16).attr("fill-opacity", 0.8).attr("stroke", null).attr("fill", "#582");
-    tagRow.append("text").attr("x", 10).attr("y", (d, i) => (i + 1) * 22).style("font-size", "12px").style("fill", "#eef2ee").text((d) => d[0] + " - " + d[1]);
+    for (let i = 0; i < topUsers.length; i++)
+      topUsers[i].push(i);
+    for (let i = 0; i < topTags.length; i++)
+      topTags[i].push(i);
+    const userG = svg2.select(".users");
+    const tagG = svg2.select(".hashtags");
+    const offset = 20;
+    userG.selectAll(".user-row").data(topUsers, (d) => d[0]).join((enter) => {
+      const row = enter.append("g").classed("user-row", true);
+      row.append("rect").attr("x", 2).attr("y", topUsers.length * 22 + 10 + offset).attr("rx", 3).attr("ry", 3).attr("width", (d) => userXScale(d[1])).attr("height", 16).attr("fill-opacity", 0.8).attr("stroke", null).attr("fill", "#27A").transition().duration(800).attr("y", (d) => d[2] * 22 + 10 + offset);
+      row.append("text").attr("x", 10).attr("y", (6 + 1) * 22 + offset).style("font-size", "12px").style("fill", "#eef2ee").text((d) => d[0] + " - " + d[1]).transition().duration(800).attr("y", (d) => (d[2] + 1) * 22 + offset);
+    }, (update) => {
+      update.select("rect").transition().duration(800).attr("y", (d) => d[2] * 22 + 10 + offset).attr("width", (d) => userXScale(d[1]));
+      update.select("text").transition().duration(800).attr("y", (d) => (d[2] + 1) * 22 + offset).text((d) => d[0] + " - " + d[1]);
+    }, (exit) => {
+      exit.transition().duration(800).attr("transform", "translate(-200, 0)").remove();
+    });
+    tagG.selectAll(".tag-row").data(topTags, (d) => d[0]).join((enter) => {
+      const row = enter.append("g").classed("tag-row", true);
+      row.append("rect").attr("x", 2).attr("y", topTags.length * 22 + 10 + offset).attr("rx", 3).attr("ry", 3).attr("width", (d) => tagXScale(d[1])).attr("height", 16).attr("fill-opacity", 0.8).attr("stroke", null).attr("fill", "#582").transition().duration(800).attr("y", (d) => d[2] * 22 + 10 + offset);
+      row.append("text").attr("x", 10).attr("y", (6 + 1) * 22 + offset).style("font-size", "12px").style("fill", "#eef2ee").text((d) => d[0] + " - " + d[1]).transition().duration(800).attr("y", (d) => (d[2] + 1) * 22 + offset);
+    }, (update) => {
+      update.select("rect").transition().duration(800).attr("y", (d) => d[2] * 22 + 10 + offset).attr("width", (d) => tagXScale(d[1]));
+      update.select("text").transition().duration(800).attr("y", (d) => (d[2] + 1) * 22 + offset).text((d) => d[0] + " - " + d[1]);
+    }, (exit) => {
+      exit.transition().duration(800).attr("transform", "translate(-200, 0)").remove();
+    });
   }
   initializeEvents() {
     let animationFrame = null;
