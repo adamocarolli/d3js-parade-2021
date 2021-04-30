@@ -16,7 +16,7 @@ export class SnapshotsView {
         this.twitter = twitter;
         this.snapshots = snapshots || [];
         this.transitioning = false;
-        this.descriptionMarkDown = `## Welcome\nClick **NEXT** to begin the tour.`;
+        this.descriptionMarkDown = `## Visualizing d3.js history on Twitter\nA visual story on how the conversation on d3.js has evolved over time. Click **NEXT** to begin the tour.`;
         this.descriptionHTML = markdownConverter.makeHtml(this.descriptionMarkDown);
         this.current = -1;
         this.isEditMode = false;
@@ -36,19 +36,19 @@ export class SnapshotsView {
         el.appendChild(markdownContainerEl);
 
         const row2 = this.createRow(el);
-        this.createSnapshotButton(row2, 'PREVIOUS', () => {
+        this.createSnapshotButton(row2, '\u276E PREVIOUS', () => {
             if (!this.transitioning && this.current > 0) {
                 this.showSnapshot(this.snapshots[--this.current]);
             }
         });
-        this.createSnapshotButton(row2, 'NEXT', () => {
+        this.createSnapshotButton(row2, 'NEXT \u276F', () => {
             if (!this.transitioning && this.current < this.snapshots.length - 1) {
                 this.showSnapshot(this.snapshots[++this.current]);
             }
         });
 
         const editModeRow = this.createRow(el);
-        this.createSnapshotButton(editModeRow, 'Toggle Edit Mode', () => {
+        this.createSnapshotButton(editModeRow, 'Toggle Edit Mode \u270D', () => {
             if (this.isEditMode) {
                 document.getElementById('snapshots-editor-panel-container-id').style.display = 'none';
                 this.isEditMode = false;
@@ -146,6 +146,7 @@ export class SnapshotsView {
         const el = document.createElement('div');
         el.className = 'snapshot-button';
         el.innerText = text;
+        // el.alt = alt;
 
         el.addEventListener('click', cb);
         container.appendChild(el);
@@ -200,8 +201,12 @@ export class SnapshotsView {
             editorPanelContainer.style.display = 'none';
         }
 
+
         const row1 = this.createRow(editorPanelContainer);
-        this.createSnapshotButton(row1, 'TAKE SNAPSHOT', () => {
+        this.createDescriptionInputField(row1);
+
+        //Take snapshot    
+        this.createSnapshotButton(row1, '\uD83D\uDCF7', () => {
             const cameraPosition = new Float32Array(this.grafer.controller.viewport.camera.position);
             const nodes = [];
             for (const info of this.twitter.tweets.values()) {
@@ -215,12 +220,9 @@ export class SnapshotsView {
                 description: this.descriptionMarkDown,
             });
         });
-
-        const row3 = this.createRow(editorPanelContainer);
-        this.createDescriptionInputField(row3);
-
-        const row4 = this.createRow(editorPanelContainer);
-        this.createSnapshotButton(row4, 'EDIT', () => {
+        
+        //Edit
+        this.createSnapshotButton(row1, '\u270D', () => {
             // Edit current snapshot
             const cameraPosition = new Float32Array(this.grafer.controller.viewport.camera.position);
             const nodes = [];
@@ -234,13 +236,16 @@ export class SnapshotsView {
                 description: this.descriptionMarkDown,
             };
         });
-        this.createSnapshotButton(row4, 'DOWNLOAD', () => {
+
+        //Download
+        this.createSnapshotButton(row1, '\u2193', () => {
             const d = new Date();
             const exportFileName = `snapshots-${d.getMonth()}-${d.getDate()}-${d.getHours()}-${d.getMinutes()}-${d.getSeconds()}`;
             downloadObjectAsJson(this.snapshots, exportFileName);
         });
 
-        this.createUploadSnapshotsFileButton(editorPanelContainer, (snapshots) => {
+        const row2 = this.createRow(editorPanelContainer);
+        this.createUploadSnapshotsFileButton(row2, (snapshots) => {
             this.snapshots = snapshots;
         });
 
