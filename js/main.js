@@ -21128,8 +21128,8 @@ async function parseJSONL(input, cb) {
         const statementBuffer = new Uint8Array(chunk, start, i - start);
         start = i + 1;
         const str6 = decoder.decode(statementBuffer);
-        const json = JSON.parse(str6);
-        cb(json);
+        const json2 = JSON.parse(str6);
+        cb(json2);
       }
     }
     if (start < chunk.byteLength) {
@@ -21225,8 +21225,8 @@ var GraferView2 = class extends EventEmitter {
       data: []
     };
     if (paths.points) {
-      await parseJSONL(paths.points, (json) => {
-        points.data.push(json);
+      await parseJSONL(paths.points, (json2) => {
+        points.data.push(json2);
       });
     }
     const clusterLayer = {
@@ -21256,16 +21256,16 @@ var GraferView2 = class extends EventEmitter {
     };
     if (paths.clusters) {
       const nodes = clusterLayer.labels;
-      await parseJSONL(paths.clusters, (json) => {
-        nodes.data.push(Object.assign({}, json, {
+      await parseJSONL(paths.clusters, (json2) => {
+        nodes.data.push(Object.assign({}, json2, {
           color: this.colors.map.get("clusters")
         }));
       });
     }
     if (paths.clusterEdges) {
       const edges = clusterLayer.edges;
-      await parseJSONL(paths.clusterEdges, (json) => {
-        edges.data.push(Object.assign({}, json, {
+      await parseJSONL(paths.clusterEdges, (json2) => {
+        edges.data.push(Object.assign({}, json2, {
           sourceColor: this.colors.map.get("clusterEdges"),
           targetColor: this.colors.map.get("clusterEdges")
         }));
@@ -21287,17 +21287,17 @@ var GraferView2 = class extends EventEmitter {
     };
     if (paths.nodes) {
       const nodes = nodeLayer.nodes;
-      await parseJSONL(paths.nodes, (json) => {
-        this.nodes.set(json.id, json);
-        nodes.data.push(Object.assign({}, json, {
+      await parseJSONL(paths.nodes, (json2) => {
+        this.nodes.set(json2.id, json2);
+        nodes.data.push(Object.assign({}, json2, {
           color: this.colors.map.get("nodes")
         }));
       });
     }
     if (paths.nodeEdges) {
       const edges = nodeLayer.edges;
-      await parseJSONL(paths.nodeEdges, (json) => {
-        edges.data.push(Object.assign({}, json, {
+      await parseJSONL(paths.nodeEdges, (json2) => {
+        edges.data.push(Object.assign({}, json2, {
           sourceColor: this.colors.map.get("nodeEdges"),
           targetColor: this.colors.map.get("nodeEdges")
         }));
@@ -21309,7 +21309,7 @@ var GraferView2 = class extends EventEmitter {
         type: "PointLabel",
         data: [],
         mappings: {
-          fontSize: () => 32,
+          fontSize: () => 16,
           padding: () => 6
         },
         options: {
@@ -21320,8 +21320,8 @@ var GraferView2 = class extends EventEmitter {
     };
     if (paths.labels) {
       const nodes = labelsLayer.labels;
-      await parseJSONL(paths.labels, (json) => {
-        nodes.data.push(Object.assign({}, json, {
+      await parseJSONL(paths.labels, (json2) => {
+        nodes.data.push(Object.assign({}, json2, {
           color: this.colors.map.get("nodeEdges")
         }));
       });
@@ -21554,7 +21554,7 @@ var TwitterView = class {
     userG.selectAll(".user-row").data(topUsers, (d) => d[0]).join((enter) => {
       const row = enter.append("g").classed("user-row", true);
       row.append("rect").attr("x", 2).attr("y", topUsers.length * 22 + 10 + offset).attr("rx", 3).attr("ry", 3).attr("width", (d) => userXScale(d[1])).attr("height", 16).attr("fill-opacity", 0.8).attr("stroke", null).attr("fill", "#27A").transition().duration(800).attr("y", (d) => d[2] * 22 + 10 + offset);
-      row.append("text").attr("x", 10).attr("y", (6 + 1) * 22 + offset).style("font-size", "12px").style("fill", "#eef2ee").text((d) => d[0] + " - " + d[1]).transition().duration(800).attr("y", (d) => (d[2] + 1) * 22 + offset);
+      row.append("text").attr("x", 10).attr("y", (topUsers.length + 1) * 22 + offset).style("font-size", "12px").style("fill", "#eef2ee").text((d) => d[0] + " - " + d[1]).transition().duration(800).attr("y", (d) => (d[2] + 1) * 22 + offset);
     }, (update) => {
       update.select("rect").transition().duration(800).attr("y", (d) => d[2] * 22 + 10 + offset).attr("width", (d) => userXScale(d[1]));
       update.select("text").transition().duration(800).attr("y", (d) => (d[2] + 1) * 22 + offset).text((d) => d[0] + " - " + d[1]);
@@ -21564,7 +21564,7 @@ var TwitterView = class {
     tagG.selectAll(".tag-row").data(topTags, (d) => d[0]).join((enter) => {
       const row = enter.append("g").classed("tag-row", true);
       row.append("rect").attr("x", 2).attr("y", topTags.length * 22 + 10 + offset).attr("rx", 3).attr("ry", 3).attr("width", (d) => tagXScale(d[1])).attr("height", 16).attr("fill-opacity", 0.8).attr("stroke", null).attr("fill", "#582").transition().duration(800).attr("y", (d) => d[2] * 22 + 10 + offset);
-      row.append("text").attr("x", 10).attr("y", (6 + 1) * 22 + offset).style("font-size", "12px").style("fill", "#eef2ee").text((d) => d[0] + " - " + d[1]).transition().duration(800).attr("y", (d) => (d[2] + 1) * 22 + offset);
+      row.append("text").attr("x", 10).attr("y", (topTags.length + 1) * 22 + offset).style("font-size", "12px").style("fill", "#eef2ee").text((d) => d[0] + " - " + d[1]).transition().duration(800).attr("y", (d) => (d[2] + 1) * 22 + offset);
     }, (update) => {
       update.select("rect").transition().duration(800).attr("y", (d) => d[2] * 22 + 10 + offset).attr("width", (d) => tagXScale(d[1]));
       update.select("text").transition().duration(800).attr("y", (d) => (d[2] + 1) * 22 + offset).text((d) => d[0] + " - " + d[1]);
@@ -21618,6 +21618,8 @@ var TwitterView = class {
           const cache = this.metadataCache;
           for (let i = 0; i < inView.length; i++) {
             const key = inView[i].label;
+            if (!cache[key])
+              continue;
             const user = cache[key].user;
             if (!userMap.has(user)) {
               userMap.set(user, 1);
@@ -21963,6 +21965,9 @@ Click **NEXT** to begin the tour.`;
 };
 
 // src/main.js
+import {
+  json
+} from "https://cdn.skypack.dev/d3";
 function createLoading(container) {
   const el = document.createElement("div");
   el.className = "data-loading";
@@ -21988,8 +21993,9 @@ async function main() {
       twitter.displayTweet(node);
     });
     loading.parentElement.removeChild(loading);
-    const snapshots = [];
-    new SnapshotsView(document.body, grafer, twitter, snapshots);
+    json("layouts/adam_d3js/inferred/snapshots-3-30-0-6-33.json").then((snapshots) => {
+      new SnapshotsView(document.body, grafer, twitter, snapshots);
+    });
   });
 }
 main();
