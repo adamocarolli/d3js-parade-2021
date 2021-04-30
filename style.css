@@ -74,7 +74,7 @@ a {
 }
 
 .snapshot-button {
-    color: #1DA1F2;
+    color: white;
     user-select: none;
     cursor: pointer;
     display: flex;
@@ -83,6 +83,14 @@ a {
     flex: 1;
     justify-content: center;
     border-radius: 3px;
+    background: rgba(255,255,255,0.3);
+    background: linear-gradient(0deg, rgba(255,255,255,0.1), rgba(255,255,255,0.3));
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+}
+
+.snapshot-button:hover {
+    opacity: 1;
 }
 
 .snapshots-markdown-container {
