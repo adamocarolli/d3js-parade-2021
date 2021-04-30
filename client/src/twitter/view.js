@@ -108,9 +108,9 @@ export class TwitterView {
                     .attr('ry', 3)
                     .attr('width', d => userXScale(d[1]))
                     .attr('height', 16)
-                    .attr('fill-opacity', 0.8)
+                    .attr('fill-opacity', 0.7)
                     .attr('stroke', null)
-                    .attr('fill', '#27A')
+                    .attr('fill', '#6da7de')
                     .transition()
                     .duration(800)
                     .attr('y', (d) => (d[2]) * 22 + 10 + offset);
@@ -156,9 +156,9 @@ export class TwitterView {
                     .attr('ry', 3)
                     .attr('width', d => tagXScale(d[1]))
                     .attr('height', 16)
-                    .attr('fill-opacity', 0.8)
+                    .attr('fill-opacity', 0.7)
                     .attr('stroke', null)
-                    .attr('fill', '#582')
+                    .attr('fill', '#f8933a')
                     .transition()
                     .duration(800)
                     .attr('y', (d) => (d[2]) * 22 + 10 + offset);
