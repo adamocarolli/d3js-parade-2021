@@ -74,6 +74,10 @@ a {
     font-family: 'Lato', sans-serif;
 }
 
+.aggregation-pane {
+    font-family: 'Lato', sans-serif;
+}
+
 .data-loading {
     position: absolute;
     left: 50%;
