@@ -1,4 +1,5 @@
 import {DataFile} from 'https://cdn.skypack.dev/@dekkai/data-source/build/dist/mod.js';
+import LosslessJSON from 'https://cdn.skypack.dev/lossless-json';
 
 export async function loadFileJSON(inputPath) {
     const file = await DataFile.fromLocalSource(inputPath);
@@ -6,6 +7,14 @@ export async function loadFileJSON(inputPath) {
     const decoder = new TextDecoder();
     const str = decoder.decode(data);
     return JSON.parse(str);
+}
+
+export async function loadFileLosslessJSON(inputPath) {
+    const file = await DataFile.fromLocalSource(inputPath);
+    const data = await file.loadData();
+    const decoder = new TextDecoder();
+    const str = decoder.decode(data);
+    return LosslessJSON.parse(str);
 }
 
 export async function loadFileJSONL(file, idKey = 'id', cb = null) {
@@ -19,7 +28,7 @@ export async function loadFileJSONL(file, idKey = 'id', cb = null) {
     return map;
 }
 
-export async function parseJSONL(inputPath, cb) {
+export async function _parseJSONL(lossless, inputPath, cb) {
     const file = await DataFile.fromLocalSource(inputPath);
 
     // load 16MB chunks
@@ -27,6 +36,7 @@ export async function parseJSONL(inputPath, cb) {
     const byteLength = await file.byteLength;
     const decoder = new TextDecoder();
     const lineBreak = '\n'.charCodeAt(0);
+    const JSONParser = lossless ? LosslessJSON : JSON;
 
     for(let offset = 0; offset <= byteLength; offset += sizeOf16MB) {
         const chunkEnd = Math.min(offset + sizeOf16MB, byteLength);
@@ -41,7 +51,7 @@ export async function parseJSONL(inputPath, cb) {
                 ++count;
 
                 const str = decoder.decode(statementBuffer);
-                const json = JSON.parse(str);
+                const json = JSONParser.parse(str);
 
                 await cb(json);
             }
@@ -53,6 +63,14 @@ export async function parseJSONL(inputPath, cb) {
 
         console.log(`${chunkEnd} / ${byteLength} - ${((chunkEnd/byteLength) * 100).toFixed(2)}%`);
     }
+}
+
+export async function parseJSONL(inputPath, cb) {
+    await _parseJSONL(false, inputPath, cb);
+}
+
+export async function parseLosslessJSONL(inputPath, cb) {
+    await _parseJSONL(true, inputPath, cb);
 }
 
 export function makeJSONL(entries) {

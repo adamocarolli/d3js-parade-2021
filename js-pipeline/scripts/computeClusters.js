@@ -257,7 +257,7 @@ function unfoldLayout(clusters, labels, nodes, edges) {
 async function main(inputFile, outputPath) {
     const scores = new Map();
 
-    for (let i = 0.25; i <= 1.01; i += 0.05) {
+    for (let i = 0.2; i <= 1.01; i += 0.05) {
         scores.set(i.toFixed(2), []);
     }
 
@@ -284,7 +284,8 @@ async function main(inputFile, outputPath) {
         const normalized = (json.score - 0.25) / 0.75;
         const scaled = easeOutCubic(normalized);
         const score = scaled * 0.75 + 0.25;
-        const key = (Math.floor(score * 20) / 20).toFixed(2);
+        let key = (Math.floor(score * 20) / 20).toFixed(2);
+        if (key === '1.00') key = '0.95';
         if (!scores.has(key)) {
             scores.set(key, []);
         }
@@ -326,7 +327,7 @@ async function main(inputFile, outputPath) {
 
             allClusters.push(month);
 
-            for (let i = 1.0; i >= 0.24; i -= 0.05) {
+            for (let i = 1.0; i >= 0.19; i -= 0.05) {
                 const key = i.toFixed(2);
                 const scoreEdges = scores.get(key);
                 // const interEdges = [];
